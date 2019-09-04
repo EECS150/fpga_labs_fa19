@@ -1,0 +1,159 @@
+\documentclass[11pt]{article}
+
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{graphicx}
+% formatting
+\usepackage{fullpage}
+\usepackage{verbatim}
+\usepackage{moreverb}
+\usepackage{minted}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{microtype}
+\let\verbatiminput=\verbatimtabinput
+\def\verbatimtabsize{4\relax}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\begin{document}
+\title{EECS 151/251A FPGA Lab\\
+Lab 1: Getting Set Up}
+
+\author{Prof. Borivoje Nikolic and Prof. Sophia Shao \\
+TAs: Cem Yalcin, Rebekah Zhao, Ryan Kaveh, Vighnesh Iyer \\ Department of Electrical Engineering and Computer Sciences\\
+College of Engineering, University of California, Berkeley}
+
+\date{}
+\maketitle
+
+\section{Setting Up Accounts}
+
+\subsection{Course website and Piazza}
+The course webpage can be found at \url{http://inst.eecs.berkeley.edu/~eecs151/sp19/} and includes material for lectures, labs, and homework.  You should register for a Piazza account and enroll in the EECS 151/251A class as soon as possible (\url{https://piazza.com/class/jqpr5zxqb225ed}). We will be using Piazza to make announcements and as a discussion forum for this class and for the labs. The course website .
+
+\subsection{Getting an EECS 151 Account}
+All students enrolled in the FPGA lab are required to get a EECS 151 class account to login to the workstations in lab. This semester, you can get a class account by using the webapp here:
+\url{https://inst.eecs.berkeley.edu/webacct}
+
+Once you login using your CalNet ID, you can click on 'Get a new account' in the eecs151 row. Once the account has been created, you can email your class account form to yourself to have a record of your account information.
+
+Now you should be able to login to the workstations we have available in the lab. Enter your login and initial password in the login screen. Let the lab TA know if you have any problems setting up your class account.
+
+\subsubsection{Changing your password}
+To change your default password, click on Applications on the top left toolbar on your workstation desktop, then hover over System, then click on Terminal. In the terminal type and execute the command: \verb|ssh update.cs.berkeley.edu|
+
+You can then follow the prompts to set up a new password. You can always use the same webapp that you used to create your account to reset your password if you forget it.
+
+\subsection{Getting a Github Account}
+If you haven't done so previously, sign up for a Github account at \url{https://github.com/} with your berkeley.edu email address.
+
+If you already have a Github account that's registered with your personal email address, don't create a new account. Instead, login to Github, go here \url{https://github.com/settings/emails}, and add your berkeley.edu email address to your Github account.
+
+\subsection{Submitting Student Information Form}
+Once you have your accounts, make sure you have submitted \href{https://docs.google.com/forms/d/e/1FAIpQLSd1DB8RXEDNyQ1s6KDuXZZ2MEkYeDAd7IpBQwGlX6athJm2-w/viewform?usp=sf_link}{this Google Form} with your Github account username, email, and your class account login (eecs151-xxx).  This will allow us to provide you with lab and project related resources (like github repos).
+
+\subsection{How to Login to the Lab Workstations From Your Laptop}
+The workstations used for this class are \texttt{c125m-1.eecs.berkeley.edu} through \texttt{c125m-16.eecs.berkeley.edu}, and are physically located in Cory 125.
+You can access all of these machines remotely through SSH.
+Others such as \texttt{eda-1.eecs.berkeley.edu} through \texttt{eda-8.eecs.berkeley.edu} are also available for remote login.
+
+Login to the lab machines by SSHing to them with your class account \texttt{eecs151-xxx}.
+\begin{verbatim}
+ssh eecs151-xxx@c125m-1.eecs.berkeley.edu
+\end{verbatim}
+
+\section{Getting Familiar with our Development Environment}
+\subsection{Linux Basics}
+In this class, we will be using a Linux development environment. We will be using CentOS as our Linux distro, which is a free version of Red Hat Linux. If you are unfamiliar or uncomfortable with Linux, and in particular, using the bash terminal, you should definitely check out this tutorial:
+
+\url{https://www.digitalocean.com/community/tutorial_series/getting-started-with-linux}
+
+It is highly recommended to go through all four parts of the tutorial above, even if you already are familiar with the content. To complete the labs and projects for this course, you will find it helpful to have good command line skills.
+
+One of the best ways to expand your working knowledge of bash is to watch others who are more experienced. Pay attention when you are watching someone else's screen and ask questions when you see something you don't understand. You will quickly learn many new commands and shortcuts.
+
+\subsection{Git Basics}
+Version control systems help track how files change over time and make it easier for collaborators to work on the same files and share their changes. For projects of any reasonable complexity, some sort of version control is an absolute necessity. There are tons of version control systems out there, each with some pros and cons. In this class, we will be using Git, one of the most popular version control systems. It is highly recommended that you make the effort to really understand how Git works, as it will make understanding how to actually use it much easier. Please check out the following link, which provides a good high level overview:
+
+\url{http://git-scm.com/book/en/Getting-Started-Git-Basics}
+
+Once you think you understand the material above, please complete the following tutorial:
+
+\url{http://try.github.com}
+
+Git is a very powerful tool, but it can be a bit overwhelming at first. If you don't know what you are doing, you can really cause lots of headaches for yourself and those around you, so please be careful. If you are ever doubtful about how to do something with Git ask a TA or an experienced classmate.
+
+For the purposes of this class you will probably only need to be proficient with the following commands:
+\begin{itemize}
+\item {\tt git status}
+\item {\tt git add}
+\item {\tt git commit}
+\item {\tt git pull}
+\item {\tt git push}
+\item {\tt git clone}
+\end{itemize}
+However, if you put in the effort to learn how to use some of the more powerful features (diff, blame, branch, log, mergetool, rebase, and many others), they can really increase your productivity.
+
+Git has a huge feature set which is well documented on the internet. If there is something you think Git should be able to do, chances are the command already exists. We highly encourage you to explore and discuss with fellow classmates and TA's.
+
+\textit{Optional:} If you would like to explore further, check out the slightly more advanced tutorial written for CS250:
+
+\url{http://inst.eecs.berkeley.edu/~cs250/fa13/handouts/tut1-git.pdf}
+
+\section{Setting Up Github Access}
+We will be using Github as our remote Git server for this class. Github is a popular Git hosting service which is home to many private and public (open-source) projects.
+
+\subsection{SSH Keys}
+Github authenticates you for access to your repository using ssh keys. Follow this tutorial to get SSH keys set up (this should be done on a lab workstation when you are logged in with your eecs151 class account).
+
+First, create a new SSH key (do this on the lab computer):
+\begin{verbatim}
+ssh-keygen -t rsa -b 4096 -C "your_email@berkeley.edu"
+\end{verbatim}
+Keep hitting enter to use the default settings.
+
+Then, from your terminal run:
+\begin{verbatim}
+cat ~/.ssh/id_rsa.pub
+\end{verbatim}
+
+Copy the public key that's printed out in its entirety. Go here: \url{https://github.com/settings/keys}, click on 'New SSH Key', paste your public key into the box, and click 'Add SSH key'.
+
+Finally test your SSH connection: \url{https://help.github.com/articles/testing-your-ssh-connection/#platform-linux}.
+
+If you have any issues, ask a TA for help.
+
+\subsection{Acquiring Lab Files}
+The lab files, and eventually the project files, will be made available through a git repository provided by the staff. The suggested way to obtain these files is as follows. First, set up your ssh keys as described above. Then run the command below in your home directory,
+
+\begin{verbatim}
+git clone git@github.com:EECS150/fpga_labs_fa19.git
+\end{verbatim}
+
+Whenever a new lab is released, you should only need to \verb|git pull| to retrieve the new files. Furthermore, if there are any updates, \verb|git pull| will fetch the changes and merge them in.
+
+For now, you will only have pull access to this repository. If you make any local commits, you will not be able to push them to the remote server. Later on, each team will receive their own private repo for the project, and you will be able to push and pull from that.
+
+\section{References and Resources}
+
+A very handy overview of what your Pynq-Z1 board can do is published by Digilent in the Pynq-Z1 Reference Manual: \url{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/start}
+
+\section*{Ackowlegement}
+This lab is the result of the work of many EECS151/251 GSIs over the years including:
+\begin{itemize}
+\item Sp12: James Parker, Daiwei Li, Shaoyi Cheng
+\item Sp13: Shaoyi Cheng, Vincent Lee
+\item Fa14: Simon Scott, Ian Juch
+\item Fa15: James Martin
+\item Fa16: Vighnesh Iyer
+\item Fa17: George Alexandrov, Vighnesh Iyer, Nathan Narevsky
+\item Sp18: Arya Reais-Parsi, Taehwan Kim
+\item Fa18: Ali Moin, George Alexandrov, Andy Zhou
+\item Sp19: Christopher Yarp, Arya Reais-Parsi
+\end{itemize}
+\end{document}

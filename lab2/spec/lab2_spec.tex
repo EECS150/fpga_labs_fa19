@@ -1,0 +1,334 @@
+\documentclass[11pt]{article}
+
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsmath}
+% formatting
+\usepackage{fullpage}
+\usepackage{verbatim}
+\usepackage{moreverb}
+\usepackage{minted}
+\usepackage{parskip}
+\let\verbatiminput=\verbatimtabinput
+\def\verbatimtabsize{4\relax}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\begin{document}
+\title{EECS 151/251A FPGA Lab\\
+Lab 2: Introduction to FPGA Development + Creating a Tone Generator}
+
+\author{Prof. Borivoje Nikolic and Prof. Sophia Shao \\
+TAs: Cem Yalcin, Rebekah Zhao, Ryan Kaveh, Vignesh Iyer \\ Department of Electrical Engineering and Computer Sciences\\
+College of Engineering, University of California, Berkeley}
+
+\date{}
+\maketitle
+
+\section{Before You Start This Lab}
+
+Make sure that you have gone through and completed the steps involved in Lab 1. Let the TA know if you are not signed up for this class on Piazza or if you do not have a class account (eecs151-xxx), so we can get that sorted out.
+
+To fetch the skeleton files for this lab \verb|cd| to the git repository (\verb|fpga_labs_sp19|) that you had cloned in the first lab and execute the command \verb|git pull|.
+
+You can find the documents/datasheets useful for this lab in the \verb|fpga_labs_sp19/resources| folder. Go through the Verilog Primer Slides in \verb|resources/Verilog|; you should feel somewhat comfortable with the basics of Verilog to complete this lab.
+
+\section{Our Development Platform - Xilinx Pynq-Z1}
+For the labs in this class, we will be using the Xilinx Pynq-Z1 development board which is built on the Zynq development platform. Our development board is a printed circuit board that contains a Zynq-7000 FPGA along with a host of peripheral ICs and connections. The development board makes it easy to program the FPGA and allows us to experiment with different peripherals.
+
+The best reference for this board is provided by Digilent: \url{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual} (a PDF version of this manual is available in the \verb|fpga_labs_sp19/resources| folder). Browse the documentation there to get a feel for both what features the board has and, more importantly, what information the documentation has, should you need it later.
+
+Being a development board, the silkscreen print clearly identifies connectors of interest. You should be able to recognize the most basic IO features on the board: GPIO LEDs, slide switches, and push-buttons. You should also be familiar with other basic elements of the board: input power socket, power switch, and the USB programming port. The following image identifies important parts of the board that may not have been obvious:
+
+\includegraphics[width=\textwidth]{figs/z1_top_annotated.png}
+\includegraphics[width=\textwidth]{figs/z1_bottom_annotated.png}
+\begin{enumerate}
+	\item Zynq 7000-series FPGA. It is connected to the peripheral ICs and I/O connectors via PCB traces.
+	\item ISSI DRAM chip
+	\item Power source jumper: shorting "REG" has the board use the external power adapter as a power source; shorting "USB" has it rely on the 5 V provided by USB. The latter will work unless your design needs to power a lot of external peripherals. Since we have labs and power adaptors available, we avoid this.
+	\item Programming mode jumper
+	\item SD card slot
+\end{enumerate}
+
+\section{The FPGA - Xilinx Zynq-7000 7z020}
+To help you become familiar with the FPGA that you will be working with through the semester, please skim Chapter 21: Programmable Logic Description of the \href{https://www.xilinx.com/support/documentation/user_guides/ug585-Zynq-7000-TRM.pdf}{Technical Reference Manual} and Chapter 2 of the \href{http://www.xilinx.com/support/documentation/user_guides/ug474_7Series_CLB.pdf}{Xilinx 7-series Configurable Logic Block User Guide}. Pay particular attention to pages 15-25 on Slices and pages 40-42 on Multiplexers. Answer the following questions (you should be able to discuss your answers for checkoff):
+
+\subsection{Checkoff Questions}\label{sec:checkoffQuestions}
+\begin{enumerate}
+	\item How many SLICEs are in a single CLB?
+	\item How many inputs do each of the LUTs on a Zynq-7000 FPGA have?
+	\item How many LUTs does the 7z020 have?
+    \item How do you implement logic functions of 7 inputs in a single SLICEL? How about 8? Draw a high-level circuit diagram to show how the implementation would look. Be specific about the elements (LUTs, muxes) that are used.
+	\item What is the difference between a SLICEL and a SLICEM?
+\end{enumerate}
+
+\section{Overview of the FPGA Build Toolchain}
+
+Before we begin the lab, we should familiarize ourselves with the CAD (computer aided design) tools that translate HDL (Verilog) into a working circuit on the FPGA. These tools will pass your design through several stages, each one bringing it closer to a concrete implementation. In previous years, older evaluation platforms (the ML505) used older FPGAs (a Xilinx Virtex-5 LX110T) and an older software suite (Xilinx ISE). Although there was a GUI, we had Makefiles to invoke each subsequent program in the toolchain to carry out the complete synthesis and perform analysis.
+
+Our new boards use Xilinx's updated design software, the Vivado Design Suite. Vivado emphasizes its powerful integrated scripting capabilities (using the Tcl language) and integration with other high-level design tools (such as, for example, High-Level Synthesis - but more on that later). It also has support for equivalent Makefiles and automation through Tcl. The GUI itself has the disadvantage of being very manual to work with. Repeatedly changing and running parameters quickly becomes tedious. Our eventual goal is definitely to automate the design process as much as possible. For learning, however, the GUI has the invaluable property of guiding us through each step of the process. Read through the following sections but don't worry about the details for now. We will run through the entire tool flow on a simple project at the end of this lab.
+
+\subsection{Synthesis}
+
+To run the synthesis step in the Vivado Design Suite (that is, turn your HDL into combinational and sequential logic), select \emph{Run Synthesis} in the \emph{Flow Navigator} pane to the left other interface. If this has been run before, the synthesized design can be inspected by selecting \emph{Open Synthesized Design}.
+
+\subsection{Implementation}
+
+The implementation step in the Vivado GUI is equivalent to the translation, mapping and place and route steps in the manual pipeline. Again, this takes the logical circuit synthesized previously and maps it to the physical logic devices our particular FPGA actually has. Select \emph{Run Implementation} in the \emph{Flow Navigator} to run it, then select \emph{Open Implementation} to inspect its outputs.
+
+\subsection{Xilinx Design Constraints (XDC)}
+
+How do we connect one of our signals to a physical device? How do we specify special properties of the circuit that might matter for correctness and timing? The Xilinx Design Constraints file (with the \verb|.xdc| extension) specifies necessary properties of the design (just like the old User Constraints File), and is a crucial input to the implementation phase. XDC is inspired by the Synopsis ASIC synthesis toolchain and aims to be somewhat compatible. You are writing a form of TCL for the Vivado TCL interpreter. More information can be found on page 22 of the \href{https://www.xilinx.com/support/documentation/sw_manuals/xilinx2015_2/ug911-vivado-migration.pdf}{Vivado migration guide}.
+
+Take a look at this snippet from the XDC inside \verb|lab1/lab1.srcs/constrs_1/new/z1top.xdc|:
+
+\begin{minted}{tcl}
+set_property -dict { PACKAGE_PIN L19   IOSTANDARD LVCMOS33 } [get_ports { BUTTONS[3] }];
+\end{minted}
+
+This syntax assigns the properties \verb|PACKAGE_PIN| and \verb|IOSTANDARD| with the values \verb|L19| and \verb|LVCMOS33| (respectively) to the port \verb|BUTTONS[3]|, a signal we defined in our Verilog source. Each of these properties has a separate consequence in the synthesis process:
+
+\begin{itemize}
+\item The pin to which the \verb|BUTTONS[3]| signal should be connected to the physical pin L19 on the FPGA package.
+\item The logic convention (maximum voltage, what ranges constitute low and high, etc) for that port will be LVCMOS33.
+\end{itemize}
+
+\subsection{Bitstream generation}
+
+To generate the programming file our FPGA will understand, we invoke \emph{Generate Bitstream} in the \emph{Flow Navigator}.
+
+\subsection{Timing Analysis}
+
+A timing analysis report can be generated under \emph{Synthesis} in \emph{Flow Navigator}, by expanding \emph{Open Synthesized Design} and selecting \emph{Report Timing Summary}.
+
+\subsection{Design Reports}
+
+Reports are automatically generated at each step in the build flow. You should be able to discover them under each of the expanded stages in the \emph{Flow Navigator}. The \emph{Project Summary} window (under the \emph{Window} menu) presents a nice summary of the reports generated through each step. You will see some examples later in the lab.
+
+\subsection{Programming the FPGA}
+
+To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{Hardware Manager}. This is accessible under \emph{Program and Debug} in the \emph{Flow Navigator}, right under \emph{Generate Bitstream}. Once connected to your FPGA over the USB JTAG interface, you can select \emph{Program Device} in the \emph{Flow Navigator} (or in the \emph{Hardware Manager} pane that opens) to perform the programming.
+
+\subsection{Toolchain Conclusion}
+This section was information dense. Don't worry about understanding the internals of each tool and the exact file formats they work with, especially for different Xilinx software generations. Just understand what each step of the toolchain does at a high level and you will be good for this class. You will use these kinds of tools regularly, but for now let the staff worry about making sure they work in the first place.
+
+\section{Your First FPGA Design}
+Finally, let's conclude with a simple example of a complete project. Throughout the semester, you will build increasingly complex designs using Verilog, a widely used hardware description language (HDL). For this lab, you will use basic Verilog to describe a simple digital circuit.
+
+Now that you have cloned the \verb|fpga_labs_sp19| repository, you can \verb|cd| to the 
+\verb|fpga_labs_sp19/lab1| directory to see this lab's skeleton files. You will note that there is a \verb|lab1.srcs| directory and a \verb|lab1.xpr| file.
+
+Past versions of this course used an FPGA development toolchain from the Xilinx ISE Design Suite. The modern alternative, and that which we are now using for this course, is the Xilinx Vivado Design Suite (``Vivado'' for short). We will initially use Vivado's Integrated Development Environment (IDE) instead of any command-line tools, though you will eventually see that the framework (especially with Pynq) is ripe for automation with TCL and Python scripting.
+
+The lab skeleton files include the project meta data file, \verb|.xpr|, a Verilog source file for a simple top-level module, \verb|z1top.v|, and a constraints file, \verb|z1top.xdc|.
+
+HDL source files like \verb|z1top.v| (where the HDL is Verilog) describe the circuit that you want to create on the FPGA. \verb|z1top.v| describes a circuit that is the \emph{top-level} of your circuit: it has access to the signals that come into and out of the FPGA chip. Constraints files, such as \verb|z1top.xdc|, allow the engineer (you!) to tailor specific properties of the synthesized design to how they wish to use their specific chip. This includes the crucial mapping between FPGA input/output pins and signal names used in circuit descriptions. We'll cover more on constraints files in the next lab, so don't worry about the details too much just yet.
+
+\subsection{Set up your Pynq-Z1}
+
+\begin{enumerate}
+  \item Plug in the power adaptor to provide mains power.
+  \item Insert the factory-imaged SD card to provide a boot OS for the onboard ARM (mostly for use later).
+  \item Connect the USB interface to a spare USB port on your workstation.
+  \item Turn the board on.
+\end{enumerate}
+
+\subsection{Open the Lab 1 project in the Vivado Design Suite}
+
+In our Centos environment, press Alt-F2 to bring up a command dialog. Type the full path to the \verb|vivado| binary to execute it:
+
+\begin{verbatim}
+/opt/Xilinx/Vivado/current/bin/vivado
+\end{verbatim}
+
+(You can also run this from a terminal or create a Desktop shortcut.)
+
+Once in Vivado, open up the \verb|lab1/lab1.xpr| project file. Look around the environment to try and get a feel for the GUI. Open up the \verb|lab1/lab1.srcs/sources_1/new/z1top.v| source file. Again, this file contains a Verilog module description which specifies which signals are inputs into the module and which signals are outputs.
+
+The \verb|BUTTONS| input is a signal that is 4 bits wide (as indicated by the [3:0] width descriptor). This input signal represents the logic signals coming from the momentary push-button switches on the bottom right side of your Pynq-Z1 board. You should inspect your board to find these switches and confirm that there are 4 of them. Another basic input signal is \verb|SWITCHES|, which is 2 bits wide (as indicated by the [1:0] descriptor). Each of these two signals represents the slide switches on the Pynq-Z1, located just to the left of the momentary switches (look for SW0 and SW1).
+
+The \verb|LEDS| output is a signal that is 6 bits wide (as indicated by the [5:0] width descriptor). This output signal represents the logic signals coming out of the FPGA and going into the bank of LEDs at the bottom right of the Pynq-Z1, just above the buttons. Almost. There are only 4 LEDs there; 2 more are tri-color LEDs located just above the slide switches in the middle.
+
+In this file, we can describe how the slide switches, push buttons and LEDs are connected through the FPGA. There is one line of code that describes an AND gate that takes the values of one of the buttons and one of the slide switches, ANDs them together, and sends that signal out to the first LED. Let's put this digital circuit on the FPGA!
+
+\subsection{Synthesize and Program}
+
+\begin{enumerate}
+  \item In Vivado, locate the \emph{Flow Navigator} pane to the left of the screen. Near the bottom, under \emph{Program and Debug}, click \emph{Generate Bitstream}. Accept the default settings and wait. This should invoke the dependent steps in the flow: \emph{Synthesis} and \emph{Implementation} (among other things).
+    \begin{itemize}
+      \item Selecting \emph{Project Manager} will give you a nice overview of the progress of various background steps while this happens.
+      \item So will watching the \emph{Messages} and \emph{Logs} output.
+    \end{itemize}
+  \item When the synthesis and bitstream generation is done, select \emph{Open Hardware Manager} and connect to your FPGA.
+    \begin{itemize}
+      \item If you haven't before, or the hardware manager says no devices are connected, select \emph{Menu} $\rightarrow$ \emph{Open New Target}
+      \item You should see \verb|xilinx_tcf| listed under Harware Targets in the top pane. In the bottom pane, two entries: \verb|arm_dap_0| and \verb|xc7z020_1|. That's good. \emph{Next} $\rightarrow$ \emph{Finish}.
+    \end{itemize}
+  \item Back in the \emph{Flow Navigator} on the left, under \emph{Program and Debug}, select \emph{Program Device}. The only option to program will be the FPGA, \verb|xc7z020_1|. The default bitstream file path should work too.
+  \item See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
+\end{enumerate}
+
+Go ahead and extend this example with more AND or other gates to see them in action!
+
+\section{A Structural and Behavioral Adder Design and also Inspecting the Schematic}
+
+\subsection{Build a Structural 14-bit Adder}
+To help you with this task, please refer to the `Code Generation with for-generate loops' slide in the Verilog Primer Slides (slide 35).
+
+Open the Lab 2 project (\verb|lab2.xpr|) in Vivado Design Suite from the lab repo (did you remember to \verb|git pull|?). Begin by opening \verb|lab2/lab2.srcs/sources_1/new/full_adder.v|; fill in the logic to produce the full adder outputs from the inputs. Then open \verb|structural_adder.v| and construct a ripple carry adder using the full adder cells you designed earlier and a `for-generate loop'. 
+
+Finally, inspect the \verb|z1top.v| top-level module and see how your structural adder is instantiated and hooked up to the top-level signals. For now, just look at the \verb|user_adder| instance of your structural adder. As we learned in previous lab, the basic I/O options on the Z1 board are limited. How are we managing to input two 3-bit integers?
+
+Run Synthesis, Implementation, and Generate the Bitstream for your design. (Remember that, in the GUI, you can select a later step in the pipeline and have all prerequisite steps performed automatically when prompted.) Program the board. Test out your design and see that you get the correct results from your adder. You should try entering different binary numbers into your adder with the switches and buttons and see that the correct sum is displayed on the GPIO LEDs. 
+
+If there are any problems with your design, you can view the output report in Vivado from the \emph{Project Summary} view. The Project Summary tab opens by default, but you can bring it up again from the \emph{Window} menu. See box 1 in the figure for an example. At the bottom of the screen (box 2 in the same figure) you can also inspect the outputs of the individual tools that make up the pipeline; there lies bountiful debugging information should you ever need it. Unfortunately, not every log or warning message is useful, but it will serve you well to compare what outputs you do see with the relative success you have with your design.
+
+\begin{center}
+  \includegraphics[width=\textwidth]{figs/vivado_project_summary.png}
+\end{center}
+
+\subsection{Inspection of Structural Adder Using Schematic and fpga\_editor}
+\subsubsection{Schematics and FPGA layout}
+Now let's take a look at how the Verilog you wrote mapped to the primitive components on the FPGA. Three levels of schematic are generated for you once you've run the pipeline (each after its prerequisite step). In the \emph{Flow Navigator}, you can view \emph{Schematic}s under
+
+\begin{enumerate}
+  \item \emph{RTL Analysis} $\rightarrow$ \emph{Open Elaborated Design}
+  \item \emph{Synthesis} $\rightarrow$ \emph{Open Synthesized Design}
+  \item \emph{Implementation} $\rightarrow$ \emph{Open Implemented Design}
+\end{enumerate}
+
+The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top.v|). Check to see that your structural adder module is hooked up properly and looks sane. It's ok if the wires don't appear to be connected, just hover your mouse over the endpoints on the schematic and ensure that the connections are as you expect. Take note of the primitive blocks used in your circuit.
+
+In the RTL Analysis (1) you are viewing a visualisation of the topology your RTL describes. At this point, logic elaboration is very abstract: you'll notice that your logic is expressed in terms of the logic gates you described (XOR, AND, etc). Any logic you describe in RTL is included, even if it's disconnected. In the Synthesis schematic (2) this logic has been elaborated further into what look like FPGA elements, but still at higher layer of abstraction, and with some unused signals still present. In the final schematic of the three, Implementation (3), the schematic now shows which of the elements in your nominated chip are actually targeted. Superfluous logic has been elided from the design.
+
+Play around with the schematics. See how your logic is represented at successive stages of design.
+
+Finally, you also look at how your circuit was placed and laid out on the FPGA. Once you've run the pipeline, open \emph{Implemented Design}, click on the \emph{Window} menu, and select \emph{Device}. You'll be presented with a layout of the FPGA package as in box 1 in the figure below. It'll be hard to see with a small design, but the logic elements you've ended up using with your design will be highlighted. You can highlight your own nets in the diagram to make it easier to find them by selecting a net or signal from the Netlist pane (\emph{Window} $\rightarrow$ \emph{Netlist}; see box 2).
+
+\begin{center}
+	\includegraphics[width=\textwidth]{figs/fpga_layout.png}
+\end{center}
+
+Now you can explore your design and look for the modules that you wrote. If you scroll down in the \verb|Netlist Window| you should see various components of your logic. Some elements are mapped to LUTs: somewhere buried in their properties is the type of slice (recall that SLICELs contain the look-up tables that actually implement the logic you want). See if you can find out which nets have been assigned to LUTs, and how they are connected. Go ahead and explore several SLICELs that implement the structural adder to see how they are connected to each other and the outputs of your circuit.
+
+\subsection{Build a Behavioral 14-bit Adder}
+
+Check out \verb|behavioral_adder.v|. It has already been filled with the appropriate logic for you. Notice how behavioral Verilog allows you to describe the function of a circuit rather than the topology or implementation.
+
+In \verb|z1top.v|, you can see that the \verb|structural_adder| and the \verb|behavioral_adder| are both instantiated in the self-test section. A module called \verb|adder_tester| has been written for you that will check that the sums generated by both your adders are equal for all possible input combinations. If both your adders are operating identically, both RGB LEDs will light up. Verify this on your board.
+
+\subsection{Inspection of Behavioral Adder Schematics and FPGA Layout}
+
+Go through the same steps as you did for inspecting the structural adder. View the schematics at successive levels of logic elaboration and how FPGA components are connected. Record and note down any differences you see between both types of adders in the schematic and the FPGA layouts. You will be asked for some observations during checkoff.
+
+\section{Designing a Tone Generator}
+Now it's time to try something new. Let's create a tone generator/buzzer on the FPGA.
+
+Please take a look at \verb|pynq-rm.pdf| in the \verb|fpga_labs_sp19/resources| folder. Read about the clock sources available on the board on page 14. Clock signals are generated outside the FPGA by a crystal oscillator or a programmable clock generator IC. These clock signals are then connected to pin(s) on the FPGA so that they can be used in your Verilog design.
+
+Take a look at the \verb|z1top.v| module and notice the \verb|CLK_125MHZ_FPGA| input. Next take a look at the XDC \verb|PYNQ-Z1_C.xdc| and notice how the LOC for the clock net is set to H16, just as specified in the Pynq-Z1 Reference Manual. Are any other clocks available? The 125 MHz clock signal we will use is actually generated by the Ethernet chip as a cost-saving manoeuvre: it actually gets disabled when the Ethernet chip is reset. We can access the signal from within our Verilog top-level module and can propagate this clock signal to any submodules that may need it.
+
+\subsection{Audio Out}
+
+As described in the Pynq Reference Manual, our evaluation boards have several other neat peripherals (and even a few expansion ports). One feature is mono (single-channel) audio out: take a look at page 18. A Sallen-Key Butterworth low-pass filter is used at the output of another standard logic interface to the FPGA. This filter ``smooths out'' a pulse-width-modulated (PWM) signal to generated sinusoidal signals for driving a (low-power) external speaker. To learn more about how PWM will help generate an output waveform, read on to page 19. Aside: why is it a low-pass filter? What is the frequency response of the filter and why is it chosen as such?
+
+\subsection{Enabling the Audio Out signal in the constraints file}
+
+The description of Audio Out in the Reference Manual tells us which are the relevant pins on the FPGA. Let's add the Audio Out connection to the XDC constraints file. Uncomment lines 63 and 64 of \verb|PYNQ-Z1_C.xdc|, which is the master XDC file we will be using throughout the semester. These lines specify that the two relevant signals (\verb|aud_pwm| and \verb|aud_sd|) are connected to pins R18 and T17, respectively. Additionally, add the two signals to the top-level module \verb|z1top.v| so that they can be used in the design. (Should these be inputs or outputs?)
+
+Ask a TA if you need help for this part.
+
+\subsection{Generating a Square Wave}
+Let's say we want to play a 220 Hz square wave out of the Mono Audio Out port on our board. We want our square wave to have a 50\% duty cycle, so for half of the period of one wave the signal should be high and for the other half, the signal should be low. We have a 125 MHz clock input we can use to time our circuit.
+
+Find the following:
+\begin{enumerate}
+	\item The period of our clock signal (frequency = 125 MHz)?
+	\item The period of a 220 Hz square wave?
+	\item How many clock cycles does it take for one period of the square wave?
+\end{enumerate}
+
+Knowing how many clock cycles equals one cycle of the square wave, you can design this circuit. First open \verb|tone_generator.v|. Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
+
+Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
+
+\subsection{Switching the Wave On and Off}
+Now you have a tone, but it can't be toggled on and off without pulling the power to the FPGA board. Let's use the \verb|output_enable| input of the \verb|tone_generator| module to gate the square wave output. When \verb|output_enable| is 0, you should pass 0 to the \verb|square_wave_out| output, but when \verb|output_enable| is 1, you should pass your square wave to \verb|square_wave_out|.
+
+Wire up the \verb|output_enable| signal to the first slide switch (\verb|SWITCHES[0]|) in \verb|z1top|.
+
+Run your design flow. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board through the hardware manager. You should now hear a buzzing noise at 220Hz that can be turned on or off by toggling the first slide switch.
+
+You should verify that the tone is indeed 220 Hz by comparing it to a reference tone here: \url{http://onlinetonegenerator.com/}.
+
+\section{Design a Configurable Frequency tone\_generator}
+
+Let's extend our \verb|tone_generator| so that it can play different notes. You may start by adding a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|. Note you will also have to modify your \verb|clock_counter| to be 24 bits wide.
+
+The \verb|tone_switch_period| describes how often the square wave output switches from high to low or low to high. For example a \verb|tone_switch_period| of 284091 (0 d.p.) tells us to invert the square wave output every 142045 clock cycles, which for a 125 Mhz clock translates to a $\sim 440$ Hz square wave. Here is the derivation:
+
+\begin{eqnarray}
+	\frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
+	284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber
+\end{eqnarray}
+
+You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
+
+You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
+
+\subsection{Try the Configurable Frequency tone\_generator on the FPGA}
+Modify the top-level Verilog module \verb|z1top.v| to include the new input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|SWITCHES[0]| and \verb|BUTTONS[3:0]|, left-shifted by 9 bits (effectively a multiplication by 512). This will allow you to control the \verb|tone_switch_period| from 512 to 15872. Leave \verb|SWITCHES[1]| to control \verb|output_enable| initially; later, you can use it as an extra bit's worth of input. Here is a code snippet (incomplete):
+
+\begin{minted}[tabsize=4]{verilog}
+    tone_generator audio_controller (
+        .output_enable(SWITCHES[1]),
+        .tone_switch_period({18'd0, SWITCHES[0], BUTTONS[3:0]} << 9),
+    );
+\end{minted}
+
+What other way(s) do you have to digitally mute your output signal?
+
+Is the width of the bus assigned to \verb|tone_switch_period| correct? Does it matter?
+
+Run the usual synthesis, implementation and programming flow to put your new \verb|tone_generator| on the FPGA. Verify that toggling the switches and buttons changes the frequency of your \verb|tone_generator|. 
+
+\section{Checkoff}
+To checkoff for this lab, have these things ready to show the TA:
+
+\begin{enumerate}
+	\item Your programmed and functional board showing LED0 being controlled by BTN0 and SW0, as well as any modifications you made to the design.
+	\item Demonstrate your structural adder on the FPGA and show that the test passes.
+	\item Show the RTL you used to create your tone generator, and your calculations for obtaining the square wave at 220Hz
+	\item Demonstrate your tone generator on the FPGA and show that some input mutes the output noise
+\end{enumerate}
+
+Also please submit a short lab report to gradescope in which you answer/show the following things:
+\begin{enumerate}
+    \item Answers for the questions in section \ref{sec:checkoffQuestions}
+	\item Explain the differences between the behavioral and structural adder as they are synthesized in both the high-level schematic and low-level SLICE views
+	\item Show the RTL you used to create your tone generator, and your calculations for obtaining the square wave at 220Hz (with comments)
+	\item Discuss how will a higher clock frequency impact the frequency of the square wave output for a fixed \verb|tone_switch_period|?
+	
+\end{enumerate}
+
+You are done with this lab. In the next lab, we will simulate our digital designs in software, and extend our \verb|tone_generator| to read a song from a ROM and play it through our Audio Out.
+
+\section*{Ackowlegement}
+This lab is the result of the work of many EECS151/251 GSIs over the years including:
+\begin{itemize}
+\item Sp12: James Parker, Daiwei Li, Shaoyi Cheng
+\item Sp13: Shaoyi Cheng, Vincent Lee
+\item Fa14: Simon Scott, Ian Juch
+\item Fa15: James Martin
+\item Fa16: Vighnesh Iyer
+\item Fa17: George Alexandrov, Vighnesh Iyer, Nathan Narevsky
+\item Sp18: Arya Reais-Parsi, Taehwan Kim
+\item Fa18: Ali Moin, George Alexandrov, Andy Zhou
+\item Sp19: Christopher Yarp, Arya Reais-Parsi
+\end{itemize}
+\end{document}
