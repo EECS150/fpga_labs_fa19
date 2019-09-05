@@ -11,6 +11,7 @@
 \usepackage{minted}
 \usepackage{parskip}
 \usepackage{hyperref}
+\usepackage{multicol}
 \let\verbatiminput=\verbatimtabinput
 \def\verbatimtabsize{4\relax}
 \newcommand{\repo}{fpga\_labs\_fa19}
@@ -50,8 +51,13 @@ Browse the documentation there to get a feel for both what features the board ha
 
 Being a development board, the silkscreen print clearly identifies connectors of interest. You should be able to recognize the most basic IO features on the board: GPIO LEDs, slide switches, and push-buttons. You should also be familiar with other basic elements of the board: input power socket, power switch, and the USB programming port. The following image identifies important parts of the board that may not have been obvious:
 
-\includegraphics[width=\textwidth]{figs/z1_top_annotated.png}
-\includegraphics[width=\textwidth]{figs/z1_bottom_annotated.png}
+\begin{minipage}[h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{figs/z1_top_annotated.png}
+\end{minipage}
+\begin{minipage}[h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{figs/z1_bottom_annotated.png}
+\end{minipage}
+
 \begin{enumerate}
   \item Zynq 7000-series FPGA. It is connected to the peripheral ICs and I/O connectors via PCB traces.
   \item ISSI DRAM chip
@@ -61,9 +67,11 @@ Being a development board, the silkscreen print clearly identifies connectors of
 \end{enumerate}
 
 \section{The FPGA - Xilinx Zynq-7000 7z020}
-To help you become familiar with the FPGA that you will be working with through the semester, please skim Chapter 21: Programmable Logic Description of the \href{https://www.xilinx.com/support/documentation/user_guides/ug585-Zynq-7000-TRM.pdf}{Technical Reference Manual} and Chapter 2 of the \href{http://www.xilinx.com/support/documentation/user_guides/ug474_7Series_CLB.pdf}{Xilinx 7-series Configurable Logic Block User Guide}. Pay particular attention to pages 15-25 on Slices and pages 40-42 on Multiplexers. Answer the following questions (you should be able to discuss your answers for checkoff):
+To help you become familiar with the FPGA that you will be working with through the semester, please skim Chapter 21: Programmable Logic Description of the \href{https://www.xilinx.com/support/documentation/user_guides/ug585-Zynq-7000-TRM.pdf}{Technical Reference Manual} and Chapter 2 of the \href{http://www.xilinx.com/support/documentation/user_guides/ug474_7Series_CLB.pdf}{Xilinx 7-series Configurable Logic Block User Guide}.
+Pay particular attention to pages 15-25 on Slices and pages 40-42 on Multiplexers.
+You will need to answer the following questions in your lab report (Section \ref{sec:labreport}).
 
-\subsection{Checkoff Questions}\label{sec:checkoffQuestions}
+\subsection{Lab Report Questions}\label{sec:checkoffQuestions}
 \begin{enumerate}
   \item How many SLICEs are in a single CLB?
   \item How many inputs do each of the LUTs on a Zynq-7000 FPGA have?
@@ -73,13 +81,34 @@ To help you become familiar with the FPGA that you will be working with through 
 \end{enumerate}
 
 \section{Overview of the FPGA Build Toolchain}
+Before we begin the lab, we should familiarize ourselves with the CAD (computer aided design) tools that translate HDL (Verilog) into a working circuit on the FPGA.
+These tools will pass your design through several stages, each one bringing it closer to a concrete implementation.
+In previous years, older evaluation platforms (the ML505) used older FPGAs (a Xilinx Virtex-5 LX110T) and an older software suite (Xilinx ISE).
+Although there was a GUI, we had Makefiles to invoke each subsequent program in the toolchain to carry out the complete synthesis and perform analysis.
 
-Before we begin the lab, we should familiarize ourselves with the CAD (computer aided design) tools that translate HDL (Verilog) into a working circuit on the FPGA. These tools will pass your design through several stages, each one bringing it closer to a concrete implementation. In previous years, older evaluation platforms (the ML505) used older FPGAs (a Xilinx Virtex-5 LX110T) and an older software suite (Xilinx ISE). Although there was a GUI, we had Makefiles to invoke each subsequent program in the toolchain to carry out the complete synthesis and perform analysis.
+Our new boards use Xilinx's updated design software, the Vivado Design Suite.
+Vivado has integrated scripting capabilities (using the Tcl language) and integration with other high-level design tools (e.g. High-Level Synthesis).
+The GUI itself has the disadvantage of being very manual to work with.
+Repeatedly changing and running parameters quickly becomes tedious.
+We will automate the design process after this lab, however, for learning, the GUI has the invaluable property of guiding us through each step of the process.
+Read through the following sections but don't worry about the details for now.
+We will run through the entire tool flow on a simple project at the end of this lab.
 
-Our new boards use Xilinx's updated design software, the Vivado Design Suite. Vivado emphasizes its powerful integrated scripting capabilities (using the Tcl language) and integration with other high-level design tools (such as, for example, High-Level Synthesis - but more on that later). It also has support for equivalent Makefiles and automation through Tcl. The GUI itself has the disadvantage of being very manual to work with. Repeatedly changing and running parameters quickly becomes tedious. Our eventual goal is definitely to automate the design process as much as possible. For learning, however, the GUI has the invaluable property of guiding us through each step of the process. Read through the following sections but don't worry about the details for now. We will run through the entire tool flow on a simple project at the end of this lab.
+\subsection{Open the Lab 1 project in the Vivado Design Suite}
+Now that you have cloned the \texttt{\repo} repository, you can \texttt{cd} to the \texttt{\repo/lab2} directory to see this lab's skeleton files.
+You will note that there is a \verb|lab2.srcs| (sources) directory and a \verb|lab2.xpr| (project) file.
+
+In our CentOS environment, press Alt-F2 to bring up a command dialog. Type the full path to the \texttt{vivado} binary to execute it:
+
+\begin{verbatim}
+/opt/Xilinx/Vivado/current/bin/vivado
+\end{verbatim}
+
+(You can also run this from a terminal or create a Desktop shortcut.)
+
+Once in Vivado, open up the \texttt{lab2/lab2.xpr} project file. Look around the environment to try and get a feel for the GUI.
 
 \subsection{Synthesis}
-
 To run the synthesis step in the Vivado Design Suite (that is, turn your HDL into combinational and sequential logic), select \emph{Run Synthesis} in the \emph{Flow Navigator} pane to the left other interface. If this has been run before, the synthesized design can be inspected by selecting \emph{Open Synthesized Design}.
 
 \subsection{Implementation}
@@ -87,8 +116,10 @@ To run the synthesis step in the Vivado Design Suite (that is, turn your HDL int
 The implementation step in the Vivado GUI is equivalent to the translation, mapping and place and route steps in the manual pipeline. Again, this takes the logical circuit synthesized previously and maps it to the physical logic devices our particular FPGA actually has. Select \emph{Run Implementation} in the \emph{Flow Navigator} to run it, then select \emph{Open Implementation} to inspect its outputs.
 
 \subsection{Xilinx Design Constraints (XDC)}
-
-How do we connect one of our signals to a physical device? How do we specify special properties of the circuit that might matter for correctness and timing? The Xilinx Design Constraints file (with the \verb|.xdc| extension) specifies necessary properties of the design (just like the old User Constraints File), and is a crucial input to the implementation phase. XDC is inspired by the Synopsis ASIC synthesis toolchain and aims to be somewhat compatible. You are writing a form of TCL for the Vivado TCL interpreter. More information can be found on page 22 of the \href{https://www.xilinx.com/support/documentation/sw_manuals/xilinx2015_2/ug911-vivado-migration.pdf}{Vivado migration guide}.
+How do we connect one of our signals to a physical device? How do we specify special properties of the circuit that might matter for correctness and timing?
+The Xilinx Design Constraints file (with the \verb|.xdc| extension) specifies timing information and pin placement.
+%XDC is inspired by the Synopsis ASIC synthesis toolchain and aims to be somewhat compatible. You are writing a form of TCL for the Vivado TCL interpreter.
+More information can be found on page 22 of the \href{https://www.xilinx.com/support/documentation/sw_manuals/xilinx2015_2/ug911-vivado-migration.pdf}{Vivado migration guide}.
 
 Take a look at this snippet from the XDC inside \verb|lab2/lab2.srcs/constrs_1/new/z1top.xdc|:
 
@@ -104,56 +135,41 @@ This syntax assigns the properties \verb|PACKAGE_PIN| and \verb|IOSTANDARD| with
 \end{itemize}
 
 \subsection{Bitstream generation}
-
 To generate the programming file our FPGA will understand, we invoke \emph{Generate Bitstream} in the \emph{Flow Navigator}.
 
 \subsection{Timing Analysis}
-
 A timing analysis report can be generated under \emph{Synthesis} in \emph{Flow Navigator}, by expanding \emph{Open Synthesized Design} and selecting \emph{Report Timing Summary}.
 
 \subsection{Design Reports}
-
 Reports are automatically generated at each step in the build flow. You should be able to discover them under each of the expanded stages in the \emph{Flow Navigator}. The \emph{Project Summary} window (under the \emph{Window} menu) presents a nice summary of the reports generated through each step. You will see some examples later in the lab.
 
 \subsection{Programming the FPGA}
-
 To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{Hardware Manager}. This is accessible under \emph{Program and Debug} in the \emph{Flow Navigator}, right under \emph{Generate Bitstream}. Once connected to your FPGA over the USB JTAG interface, you can select \emph{Program Device} in the \emph{Flow Navigator} (or in the \emph{Hardware Manager} pane that opens) to perform the programming.
 
 \subsection{Toolchain Conclusion}
 This section was information dense. Don't worry about understanding the internals of each tool and the exact file formats they work with, especially for different Xilinx software generations. Just understand what each step of the toolchain does at a high level and you will be good for this class. You will use these kinds of tools regularly, but for now let the staff worry about making sure they work in the first place.
 
 \section{Your First FPGA Design}
-Finally, let's conclude with a simple example of a complete project. Throughout the semester, you will build increasingly complex designs using Verilog, a widely used hardware description language (HDL). For this lab, you will use basic Verilog to describe a simple digital circuit.
+Finally, let's build a simple example of a complete project. Throughout the semester, you will build increasingly complex designs using Verilog, a widely used hardware description language (HDL). For this lab, you will use basic Verilog to describe a simple digital circuit.
 
-Now that you have cloned the \texttt{\repo} repository, you can \texttt{cd} to the \texttt{\repo/lab2} directory to see this lab's skeleton files.
-You will note that there is a \verb|lab2.srcs| directory and a \verb|lab2.xpr| file.
+Open up the \verb|lab2/lab2.srcs/sources_1/new/z1top.v| source file.
+This file contains a Verilog module description which specifies which signals are inputs into the module and which signals are outputs.
+Also check the constraints file in \verb|lab2/lab2.srcs/constrs_1/z1top.xdc|.
 
-Past versions of this course used an FPGA development toolchain from the Xilinx ISE Design Suite. The modern alternative, and that which we are now using for this course, is the Xilinx Vivado Design Suite (``Vivado'' for short). We will initially use Vivado's Integrated Development Environment (IDE) instead of any command-line tools, though you will eventually see that the framework (especially with Pynq) is ripe for automation with TCL and Python scripting.
+%Past versions of this course used an FPGA development toolchain from the Xilinx ISE Design Suite. The modern alternative, and that which we are now using for this course, is the Xilinx Vivado Design Suite (``Vivado'' for short). We will initially use Vivado's Integrated Development Environment (IDE) instead of any command-line tools, though you will eventually see that the framework (especially with Pynq) is ripe for automation with TCL and Python scripting.
 
-The lab skeleton files include the project meta data file, \verb|.xpr|, a Verilog source file for a simple top-level module, \verb|z1top.v|, and a constraints file, \verb|z1top.xdc|.
+%The lab skeleton files include the project meta data file, \verb|.xpr|, a Verilog source file for a simple top-level module, \verb|z1top.v|, and a constraints file, \verb|z1top.xdc|.
 
-HDL source files like \verb|z1top.v| (where the HDL is Verilog) describe the circuit that you want to create on the FPGA. \verb|z1top.v| describes a circuit that is the \emph{top-level} of your circuit: it has access to the signals that come into and out of the FPGA chip. Constraints files, such as \verb|z1top.xdc|, allow the engineer (you!) to tailor specific properties of the synthesized design to how they wish to use their specific chip. This includes the crucial mapping between FPGA input/output pins and signal names used in circuit descriptions. We'll cover more on constraints files in the next lab, so don't worry about the details too much just yet.
+HDL source files like \verb|z1top.v| (where the HDL is Verilog) describe the circuit that you want to create on the FPGA.
+\verb|z1top.v| describes a circuit that is the \emph{top-level} of your circuit: it has access to the signals that come into and out of the FPGA chip.
+Constraints files, such as \verb|z1top.xdc|, allow the engineer (you!) to tailor specific properties of the synthesized design to how they wish to use their specific chip. This includes the crucial mapping between FPGA input/output pins and signal names used in circuit descriptions.
 
 \subsection{Set up your Pynq-Z1}
-
 \begin{enumerate}
   \item Plug in the power adaptor to provide mains power.
-  \item Insert the factory-imaged SD card to provide a boot OS for the onboard ARM (mostly for use later).
   \item Connect the USB interface to a spare USB port on your workstation.
   \item Turn the board on.
 \end{enumerate}
-
-\subsection{Open the Lab 1 project in the Vivado Design Suite}
-
-In our Centos environment, press Alt-F2 to bring up a command dialog. Type the full path to the \verb|vivado| binary to execute it:
-
-\begin{verbatim}
-/opt/Xilinx/Vivado/current/bin/vivado
-\end{verbatim}
-
-(You can also run this from a terminal or create a Desktop shortcut.)
-
-Once in Vivado, open up the \verb|lab2/lab2.xpr| project file. Look around the environment to try and get a feel for the GUI. Open up the \verb|lab2/lab2.srcs/sources_1/new/z1top.v| source file. Again, this file contains a Verilog module description which specifies which signals are inputs into the module and which signals are outputs.
 
 The \verb|BUTTONS| input is a signal that is 4 bits wide (as indicated by the [3:0] width descriptor). This input signal represents the logic signals coming from the momentary push-button switches on the bottom right side of your Pynq-Z1 board. You should inspect your board to find these switches and confirm that there are 4 of them. Another basic input signal is \verb|SWITCHES|, which is 2 bits wide (as indicated by the [1:0] descriptor). Each of these two signals represents the slide switches on the Pynq-Z1, located just to the left of the momentary switches (look for SW0 and SW1).
 
@@ -162,7 +178,6 @@ The \verb|LEDS| output is a signal that is 6 bits wide (as indicated by the [5:0
 In this file, we can describe how the slide switches, push buttons and LEDs are connected through the FPGA. There is one line of code that describes an AND gate that takes the values of one of the buttons and one of the slide switches, ANDs them together, and sends that signal out to the first LED. Let's put this digital circuit on the FPGA!
 
 \subsection{Synthesize and Program}
-
 \begin{enumerate}
   \item In Vivado, locate the \emph{Flow Navigator} pane to the left of the screen. Near the bottom, under \emph{Program and Debug}, click \emph{Generate Bitstream}. Accept the default settings and wait. This should invoke the dependent steps in the flow: \emph{Synthesis} and \emph{Implementation} (among other things).
     \begin{itemize}
@@ -315,6 +330,7 @@ To checkoff for this lab, have these things ready to show the TA:
   \item Demonstrate your tone generator on the FPGA and show that some input mutes the output noise
 \end{enumerate}
 
+\subsection{Lab Report}\ref{sec:labreport}
 Also please submit a short lab report to gradescope in which you answer/show the following things:
 \begin{enumerate}
   \item Answers for the questions in section \ref{sec:checkoffQuestions}
@@ -323,7 +339,7 @@ Also please submit a short lab report to gradescope in which you answer/show the
   \item Discuss how will a higher clock frequency impact the frequency of the square wave output for a fixed \verb|tone_switch_period|?
 \end{enumerate}
 
-You are done with this lab. In the next lab, we will simulate our digital designs in software, and extend our \verb|tone_generator| to read a song from a ROM and play it through our Audio Out.
+In the next lab, we will simulate our digital designs in software, and extend our \verb|tone_generator| to read a song from a ROM and play it through our Audio Out.
 
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:
