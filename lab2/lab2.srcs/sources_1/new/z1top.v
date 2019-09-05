@@ -6,8 +6,6 @@ module z1top(
   input [1:0] SWITCHES,
   output [5:0] LEDS
 );
-
   and(LEDS[0], BUTTONS[0], SWITCHES[0]);
   assign LEDS[5:1] = 0;
-
 endmodule

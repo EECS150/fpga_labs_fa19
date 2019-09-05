@@ -2,3 +2,8 @@
 *.log
 *.out
 *_minted*
+*.cache
+*.hw
+*.runs
+*.jou
+*.str
