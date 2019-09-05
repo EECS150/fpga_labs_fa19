@@ -162,8 +162,8 @@ set_property -dict { PACKAGE_PIN L19   IOSTANDARD LVCMOS33 } [get_ports { BUTTON
 This syntax assigns the properties \verb|PACKAGE_PIN| and \verb|IOSTANDARD| with the values \verb|L19| and \verb|LVCMOS33| (respectively) to the port \verb|BUTTONS[3]|, a signal we defined in our Verilog source. Each of these properties has a separate consequence in the synthesis process:
 
 \begin{itemize}
-	\item The pin to which the \verb|BUTTONS[3]| signal should be connected to the physical pin L19 on the FPGA package.
-	\item The logic convention (maximum voltage, what ranges constitute low and high, etc) for that port will be LVCMOS33.
+  \item The pin to which the \verb|BUTTONS[3]| signal should be connected to the physical pin L19 on the FPGA package.
+  \item The logic convention (maximum voltage, what ranges constitute low and high, etc) for that port will be LVCMOS33.
 \end{itemize}
 
 \subsection{Bitstream generation}
@@ -179,8 +179,8 @@ Reports are automatically generated at each step in the build flow. You should b
 %To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{Hardware Manager}. This is accessible under \emph{Program and Debug} in the \emph{Flow Navigator}, right under \emph{Generate Bitstream}. Once connected to your FPGA over the USB JTAG interface, you can select \emph{Program Device} in the \emph{Flow Navigator} (or in the \emph{Hardware Manager} pane that opens) to perform the programming.
 
  When the synthesis and bitstream generation is done, select \emph{Open Hardware Manager} and connect to your FPGA. If you haven't before, or the hardware manager says no devices are connected, select \emph{Menu} $\rightarrow$ \emph{Open New Target}. You should see \verb|xilinx_tcf| listed under Harware Targets in the top pane. In the bottom pane, two entries: \verb|arm_dap_0| and \verb|xc7z020_1|. That's good. \emph{Next} $\rightarrow$ \emph{Finish}.
- 
- See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
+
+See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
 
 
 %\subsection{Synthesize and Program}
@@ -234,7 +234,7 @@ In the \emph{Flow Navigator}, you can view \emph{Schematic}s under
   \item \emph{Implementation} $\rightarrow$ \emph{Open Implemented Design}
 \end{enumerate}
 
-The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top.v|).
+The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top_adder.v|).
 Check to see that your structural adder module is hooked up properly and looks sane.
 It's ok if the wires don't appear to be connected, just hover your mouse over the endpoints on the schematic and ensure that the connections are as you expect.
 Take note of the primitive blocks used in your circuit.
