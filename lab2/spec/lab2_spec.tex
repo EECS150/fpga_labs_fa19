@@ -83,19 +83,6 @@ You will need to answer the following questions in your lab report (Section \ref
 \section{Overview of the FPGA Build Toolchain}
 
 
-\subsection{Open the Lab 1 project in the Vivado Design Suite}
-Now that you have cloned the \texttt{\repo} repository, you can \texttt{cd} to the \texttt{\repo/lab2} directory to see this lab's skeleton files.
-You will note that there is a \verb|lab2.srcs| (sources) directory and a \verb|lab2.xpr| (project) file.
-
-In our CentOS environment, press Alt-F2 to bring up a command dialog. Type the full path to the \texttt{vivado} binary to execute it:
-
-\begin{verbatim}
-/opt/Xilinx/Vivado/current/bin/vivado
-\end{verbatim}
-
-(You can also run this from a terminal or create a Desktop shortcut.)
-
-Once in Vivado, open up the \texttt{lab2/lab2.xpr} project file. Look around the environment to try and get a feel for the GUI.
 
 \subsection{Synthesis}
 To run the synthesis step in the Vivado Design Suite (that is, turn your HDL into combinational and sequential logic), select \emph{Run Synthesis} in the \emph{Flow Navigator} pane to the left other interface. If this has been run before, the synthesized design can be inspected by selecting \emph{Open Synthesized Design}. Select \texttt{Schematic} under ``Open Synthsized Design" on the left toolbar to see a circuit schematic.
@@ -136,7 +123,7 @@ To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{
 %\subsection{Toolchain Conclusion}
 %This section was information dense. Don't worry about understanding the internals of each tool and the exact file formats they work with, especially for different Xilinx software generations. Just understand what each step of the toolchain does at a high level and you will be good for this class. You will use these kinds of tools regularly, but for now let the staff worry about making sure they work in the first place.
 
-\section{Overview of the FPGA Build Toolchainn}
+\section{Overview of the FPGA Build Toolchain}
 
 Before we begin the lab, we should familiarize ourselves with the CAD (computer aided design) tools that translate HDL (Verilog) into a working circuit on the FPGA.
 These tools will pass your design through several stages, each one bringing it closer to a concrete implementation.
@@ -193,52 +180,86 @@ In our CentOS environment, press Alt-F2 to bring up a command dialog. Type the f
 
 Once in Vivado, open up the \texttt{lab2/lab2.xpr} project file. Look around the environment to try and get a feel for the GUI.
 
+\subsection{Synthesis}
+To run the synthesis step in the Vivado Design Suite (that is, turn your HDL into combinational and sequential logic), select \emph{Run Synthesis} in the \emph{Flow Navigator} pane to the left other interface. If this has been run before, the synthesized design can be inspected by selecting \emph{Open Synthesized Design}. Select \texttt{Schematic} under ``Open Synthsized Design" on the left toolbar to see a circuit schematic.
+
+\subsection{Implementation}
+The implementation step in the Vivado GUI is equivalent to the translation, mapping and place and route steps in the manual pipeline. Again, this takes the logical circuit synthesized previously and maps it to the physical logic devices our particular FPGA actually has. Select \emph{Run Implementation} in the \emph{Flow Navigator} to run it, then select \emph{Open Implementation} to inspect its outputs.
+
+\subsection{Xilinx Design Constraints (XDC)}
+How do we connect one of our signals to a physical device? How do we specify special properties of the circuit that might matter for correctness and timing?
+The Xilinx Design Constraints file (with the \verb|.xdc| extension) specifies timing information and pin placement.
+%XDC is inspired by the Synopsis ASIC synthesis toolchain and aims to be somewhat compatible. You are writing a form of TCL for the Vivado TCL interpreter.
+More information can be found on page 22 of the \href{https://www.xilinx.com/support/documentation/sw_manuals/xilinx2015_2/ug911-vivado-migration.pdf}{Vivado migration guide}.
+
+Take a look at this snippet from the XDC inside \verb|lab2/lab2.srcs/constrs_1/new/z1top.xdc|:
+\begin{minted}{tcl}
+set_property -dict { PACKAGE_PIN L19   IOSTANDARD LVCMOS33 } [get_ports { BUTTONS[3] }];
+\end{minted}
+
+This syntax assigns the properties \verb|PACKAGE_PIN| and \verb|IOSTANDARD| with the values \verb|L19| and \verb|LVCMOS33| (respectively) to the port \verb|BUTTONS[3]|, a signal we defined in our Verilog source. Each of these properties has a separate consequence in the synthesis process:
+
+\begin{itemize}
+	\item The pin to which the \verb|BUTTONS[3]| signal should be connected to the physical pin L19 on the FPGA package.
+	\item The logic convention (maximum voltage, what ranges constitute low and high, etc) for that port will be LVCMOS33.
+\end{itemize}
+
+\subsection{Bitstream generation}
+To generate the programming file our FPGA will understand, we invoke \emph{Generate Bitstream} in the \emph{Flow Navigator}.
+
+\subsection{Timing Analysis}
+A timing analysis report can be generated under \emph{Synthesis} in \emph{Flow Navigator}, by expanding \emph{Open Synthesized Design} and selecting \emph{Report Timing Summary}.
+
+\subsection{Design Reports}
+Reports are automatically generated at each step in the build flow. You should be able to discover them under each of the expanded stages in the \emph{Flow Navigator}. The \emph{Project Summary} window (under the \emph{Window} menu) presents a nice summary of the reports generated through each step. You will see some examples later in the lab.
+
+\subsection{Programming the FPGA}
+To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{Hardware Manager}. This is accessible under \emph{Program and Debug} in the \emph{Flow Navigator}, right under \emph{Generate Bitstream}. Once connected to your FPGA over the USB JTAG interface, you can select \emph{Program Device} in the \emph{Flow Navigator} (or in the \emph{Hardware Manager} pane that opens) to perform the programming.
+
+ When the synthesis and bitstream generation is done, select \emph{Open Hardware Manager} and connect to your FPGA. If you haven't before, or the hardware manager says no devices are connected, select \emph{Menu} $\rightarrow$ \emph{Open New Target}. You should see \verb|xilinx_tcf| listed under Harware Targets in the top pane. In the bottom pane, two entries: \verb|arm_dap_0| and \verb|xc7z020_1|. That's good. \emph{Next} $\rightarrow$ \emph{Finish}.
+ 
+ See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
 
 
-\subsection{Synthesize and Program}
-\begin{enumerate}
-  \item In Vivado, locate the \emph{Flow Navigator} pane to the left of the screen. Near the bottom, under \emph{Program and Debug}, click \emph{Generate Bitstream}. Accept the default settings and wait. This should invoke the dependent steps in the flow: \emph{Synthesis} and \emph{Implementation} (among other things).
-    \begin{itemize}
-      \item Selecting \emph{Project Manager} will give you a nice overview of the progress of various background steps while this happens.
-      \item So will watching the \emph{Messages} and \emph{Logs} output.
-    \end{itemize}
-  \item When the synthesis and bitstream generation is done, select \emph{Open Hardware Manager} and connect to your FPGA.
-    \begin{itemize}
-      \item If you haven't before, or the hardware manager says no devices are connected, select \emph{Menu} $\rightarrow$ \emph{Open New Target}
-      \item You should see \verb|xilinx_tcf| listed under Harware Targets in the top pane. In the bottom pane, two entries: \verb|arm_dap_0| and \verb|xc7z020_1|. That's good. \emph{Next} $\rightarrow$ \emph{Finish}.
-    \end{itemize}
-  \item Back in the \emph{Flow Navigator} on the left, under \emph{Program and Debug}, select \emph{Program Device}. The only option to program will be the FPGA, \verb|xc7z020_1|. The default bitstream file path should work too.
-  \item See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
-\end{enumerate}
+%\subsection{Synthesize and Program}
+%\begin{enumerate}
+%  \item In Vivado, locate the \emph{Flow Navigator} pane to the left of the screen. Near the bottom, under \emph{Program and Debug}, click \emph{Generate Bitstream}. Accept the default settings and wait. This should invoke the dependent steps in the flow: \emph{Synthesis} and \emph{Implementation} (among other things).
+%    \begin{itemize}
+%      \item Selecting \emph{Project Manager} will give you a nice overview of the progress of various background steps while this happens.
+%      \item So will watching the \emph{Messages} and \emph{Logs} output.
+%    \end{itemize}
+%  \item When the synthesis and bitstream generation is done, select \emph{Open Hardware Manager} and connect to your FPGA.
+%    \begin{itemize}
+%      \item If you haven't before, or the hardware manager says no devices are connected, select \emph{Menu} $\rightarrow$ \emph{Open New Target}
+%      \item You should see \verb|xilinx_tcf| listed under Harware Targets in the top pane. In the bottom pane, two entries: \verb|arm_dap_0| and \verb|xc7z020_1|. That's good. \emph{Next} $\rightarrow$ \emph{Finish}.
+%    \end{itemize}
+%  \item Back in the \emph{Flow Navigator} on the left, under \emph{Program and Debug}, select \emph{Program Device}. The only option to program will be the FPGA, \verb|xc7z020_1|. The default bitstream file path should work too.
+%  \item See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
+%\end{enumerate}
 
 \section{A Structural and Behavioral Adder Design and Inspecting the Schematic}
+
 \subsection{Build a Structural 14-bit Adder}
 To help you with this task, please refer to the `Code Generation with for-generate loops' slide in the Verilog Primer Slides (slide 35).
 
 \begin{enumerate}
   \item Open \verb|lab2/lab2.srcs/sources_1/new/full_adder.v|; fill in the logic to produce the full adder outputs from the inputs
   \item Open \verb|structural_adder.v| and construct a ripple carry adder using the full adder cells you designed earlier and a `for-generate loop'.
-  \item Inspect the \verb|z1top_adder.v| top-level module and see how your structural adder is instantiated and hooked up to the top-level signals.
-    Look at the \verb|user_adder| instance of your structural adder.
-    As we learned in previous lab, the basic I/O options on the Z1 board are limited. How are we managing to input two 3-bit integers?
-  \item Set \texttt{z1top\_adder.v} as the top-level module by right-clicking \texttt{z1top\_adder} in Sources $\rightarrow$ Design Sources and click `Set as Top'.
-  \item Run bitstream generation as usual
-  \item Program the FPGA and test out the design; make sure you get correct results from your adder.
+  \item Finally, inspect the \verb|z1top.v| top-level module and see how your structural adder is instantiated and hooked up to the top-level signals. For now, just look at the \verb|user_adder| instance of your structural adder.
+ As we learned in previous lab, the basic I/O options on the Z1 board are limited. How are we managing to input two 3-bit integers?
 \end{enumerate}
 
-%Run Synthesis, Implementation, and Generate the Bitstream for your design. (Remember that, in the GUI, you can select a later step in the pipeline and have all prerequisite steps performed automatically when prompted.) Program the board. Test out your design and see that you get the correct results from your adder. You should try entering different binary numbers into your adder with the switches and buttons and see that the correct sum is displayed on the GPIO LEDs.
+Run Synthesis, Implementation, and Generate the Bitstream for your design. (Remember that, in the GUI, you can select a later step in the pipeline and have all prerequisite steps performed automatically when prompted.) Program the board. Test out your design and see that you get the correct results from your adder. You should try entering different binary numbers into your adder with the switches and buttons and see that the correct sum is displayed on the GPIO LEDs.
 
 If there are any problems with your design, you can view the output report in Vivado from the \emph{Project Summary} view. The Project Summary tab opens by default, but you can bring it up again from the \emph{Window} menu. See box 1 in the figure for an example. At the bottom of the screen (box 2 in the same figure) you can also inspect the outputs of the individual tools that make up the pipeline; there lies bountiful debugging information should you ever need it. Unfortunately, not every log or warning message is useful, but it will serve you well to compare what outputs you do see with the relative success you have with your design.
 
 \begin{center}
-  \includegraphics[width=0.7\textwidth]{figs/vivado_project_summary.png}
+  \includegraphics[width=\textwidth]{figs/vivado_project_summary.png}
 \end{center}
 
-\subsection{Inspection of the Structural Adder}
-\subsubsection{Schematics and FPGA Layout}
-Take a look at how the Verilog you wrote mapped to the primitive components on the FPGA.
-Three levels of schematic are generated for you once you've run the pipeline.
-In the \emph{Flow Navigator}, you can view \emph{Schematic}s under
+\subsection{Inspection of Structural Adder Using Schematic and fpga\_editor}
+\subsubsection{Schematics and FPGA layout}
+Now let's take a look at how the Verilog you wrote mapped to the primitive components on the FPGA. Three levels of schematic are generated for you once you've run the pipeline (each after its prerequisite step). In the \emph{Flow Navigator}, you can view \emph{Schematic}s under
 
 \begin{enumerate}
   \item \emph{RTL Analysis} $\rightarrow$ \emph{Open Elaborated Design}
@@ -246,31 +267,28 @@ In the \emph{Flow Navigator}, you can view \emph{Schematic}s under
   \item \emph{Implementation} $\rightarrow$ \emph{Open Implemented Design}
 \end{enumerate}
 
-The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top_adder.v|). Check to see that your structural adder module is hooked up properly and looks sane. \textbf{Take note of the primitive blocks used in your circuit.}
+The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top.v|). Check to see that your structural adder module is hooked up properly and looks sane. It's ok if the wires don't appear to be connected, just hover your mouse over the endpoints on the schematic and ensure that the connections are as you expect. Take note of the primitive blocks used in your circuit.}
+In the RTL Analysis (1) you are viewing a visualisation of the topology your RTL describes. At this point, logic elaboration is very abstract: you'll notice that your logic is expressed in terms of the logic gates you described (XOR, AND, etc). Any logic you describe in RTL is included, even if it's disconnected. In the Synthesis schematic (2) this logic has been elaborated further into what look like FPGA elements, but still at higher layer of abstraction, and with some unused signals still present. In the final schematic of the three, Implementation (3), the schematic now shows which of the elements in your nominated chip are actually targeted. Superfluous logic has been elided from the design.
 
-In the RTL Analysis (1) you are viewing a visualisation of the topology your RTL describes. At this point, logic elaboration is very abstract: you'll notice that your logic is expressed in terms of the logic gates you described (XOR, AND, etc).
-In the Synthesis schematic (2) this logic has been elaborated further into what look like FPGA elements, but still at higher layer of abstraction.
-In the final schematic of the three, Implementation (3), the schematic now shows which of the elements in your nominated chip are actually targeted.
+Play around with the schematics. See how your logic is represented at successive stages of design.
 
-Look at how your circuit was placed and laid out on the FPGA.
-Once you've run the pipeline, open \emph{Implemented Design}, click on the \emph{Window} menu, and select \emph{Device}.
-You'll be presented with a layout of the FPGA package as in box 1 in the figure below.
-It's hard to see with a small design, but the logic elements you've ended up using with your design will be highlighted.
-You can highlight your own nets in the diagram to make it easier to find them by selecting a net or signal from the Netlist pane (\emph{Window} $\rightarrow$ \emph{Netlist}; see box 2).
+Finally, you also look at how your circuit was placed and laid out on the FPGA. Once you've run the pipeline, open \emph{Implemented Design}, click on the \emph{Window} menu, and select \emph{Device}. You'll be presented with a layout of the FPGA package as in box 1 in the figure below. It'll be hard to see with a small design, but the logic elements you've ended up using with your design will be highlighted. You can highlight your own nets in the diagram to make it easier to find them by selecting a net or signal from the Netlist pane (\emph{Window} $\rightarrow$ \emph{Netlist}; see box 2).
 
 \begin{center}
-  \includegraphics[width=0.7\textwidth]{figs/fpga_layout.png}
+  \includegraphics[width=\textwidth]{figs/fpga_layout.png}
 \end{center}
 
-Explore your design and look for the modules that you wrote. If you scroll down in the \verb|Netlist Window| you should see various components of your logic. Some elements are mapped to LUTs: somewhere buried in their properties is the type of slice. See if you can find out which nets have been assigned to LUTs, and how they are connected. Go ahead and explore several SLICELs that implement the structural adder to see how they are connected to each other and the outputs of your circuit.
+Now you can explore your design and look for the modules that you wrote. If you scroll down in the \verb|Netlist Window| you should see various components of your logic. Some elements are mapped to LUTs: somewhere buried in their properties is the type of slice (recall that SLICELs contain the look-up tables that actually implement the logic you want). See if you can find out which nets have been assigned to LUTs, and how they are connected. Go ahead and explore several SLICELs that implement the structural adder to see how they are connected to each other and the outputs of your circuit.
 
 \subsection{Build a Behavioral 14-bit Adder}
+
 Check out \verb|behavioral_adder.v|. It has already been filled with the appropriate logic for you. Notice how behavioral Verilog allows you to describe the function of a circuit rather than the topology or implementation.
 
-In \verb|z1top_adder.v|, you can see that the \verb|structural_adder| and the \verb|behavioral_adder| are both instantiated in the self-test section. A module called \verb|adder_tester| has been written for you that will check that the sums generated by both your adders are equal for all possible input combinations. If both your adders are operating identically, both RGB LEDs will light up. Verify this on your board.
+In \verb|z1top.v|, you can see that the \verb|structural_adder| and the \verb|behavioral_adder| are both instantiated in the self-test section. A module called \verb|adder_tester| has been written for you that will check that the sums generated by both your adders are equal for all possible input combinations. If both your adders are operating identically, both RGB LEDs will light up. Verify this on your board.
 
 \subsection{Inspection of Behavioral Adder Schematics and FPGA Layout}
-Go through the same steps as you did for inspecting the structural adder. View the schematics at successive levels of logic elaboration and how FPGA components are connected. Record and note down any differences you see between both types of adders in the schematic and the FPGA layouts. You will be asked for some observations in the lab report.
+
+Go through the same steps as you did for inspecting the structural adder. View the schematics at successive levels of logic elaboration and how FPGA components are connected. Record and note down any differences you see between both types of adders in the schematic and the FPGA layouts. You will be asked for some observations during checkoff.
 
 \section{Designing a Tone Generator}
 Now it's time to try something new. Let's create a tone generator/buzzer on the FPGA.
