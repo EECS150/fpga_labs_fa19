@@ -69,7 +69,7 @@ Being a development board, the silkscreen print clearly identifies connectors of
 \section{The FPGA - Xilinx Zynq-7000 7z020}
 To help you become familiar with the FPGA that you will be working with through the semester, please skim Chapter 21: Programmable Logic Description of the \href{https://www.xilinx.com/support/documentation/user_guides/ug585-Zynq-7000-TRM.pdf}{Technical Reference Manual} and Chapter 2 of the \href{http://www.xilinx.com/support/documentation/user_guides/ug474_7Series_CLB.pdf}{Xilinx 7-series Configurable Logic Block User Guide}.
 Pay particular attention to pages 15-25 on Slices and pages 40-42 on Multiplexers.
-You will need to answer the following questions in your lab report (Section \ref{sec:labreport}).
+You will need to answer the following questions in your lab report.
 
 \subsection{Lab Report Questions}\label{sec:checkoffQuestions}
 \begin{enumerate}
@@ -79,6 +79,7 @@ You will need to answer the following questions in your lab report (Section \ref
 \item How do you implement logic functions of 7 inputs in a single SLICEL? How about 8? Draw a high-level circuit diagram to show how the implementation would look. Be specific about the elements (LUTs, muxes) that are used.
   \item What is the difference between a SLICEL and a SLICEM?
 \end{enumerate}
+
 
 
 %\subsection{Toolchain Conclusion}
@@ -228,7 +229,7 @@ Now let's take a look at how the Verilog you wrote mapped to the primitive compo
   \item \emph{Implementation} $\rightarrow$ \emph{Open Implemented Design}
 \end{enumerate}
 
-The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top.v|). Check to see that your structural adder module is hooked up properly and looks sane. It's ok if the wires don't appear to be connected, just hover your mouse over the endpoints on the schematic and ensure that the connections are as you expect. Take note of the primitive blocks used in your circuit.}
+ The first two will give you a fairly straightforward hierarchical block-level view of your design. You will find your circuit by drilling down into the \verb|user_adder| module (that's the name you gave the instantiation of \verb|structural_adder| in \verb|z1top.v|). Check to see that your structural adder module is hooked up properly and looks sane. It's ok if the wires don't appear to be connected, just hover your mouse over the endpoints on the schematic and ensure that the connections are as you expect. Take note of the primitive blocks used in your circuit.
 In the RTL Analysis (1) you are viewing a visualisation of the topology your RTL describes. At this point, logic elaboration is very abstract: you'll notice that your logic is expressed in terms of the logic gates you described (XOR, AND, etc). Any logic you describe in RTL is included, even if it's disconnected. In the Synthesis schematic (2) this logic has been elaborated further into what look like FPGA elements, but still at higher layer of abstraction, and with some unused signals still present. In the final schematic of the three, Implementation (3), the schematic now shows which of the elements in your nominated chip are actually targeted. Superfluous logic has been elided from the design.
 
 Play around with the schematics. See how your logic is represented at successive stages of design.
