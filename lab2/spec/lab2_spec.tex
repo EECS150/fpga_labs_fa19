@@ -81,18 +81,7 @@ You will need to answer the following questions in your lab report (Section \ref
 \end{enumerate}
 
 \section{Overview of the FPGA Build Toolchain}
-Before we begin the lab, we should familiarize ourselves with the CAD (computer aided design) tools that translate HDL (Verilog) into a working circuit on the FPGA.
-These tools will pass your design through several stages, each one bringing it closer to a concrete implementation.
-In previous years, older evaluation platforms (the ML505) used older FPGAs (a Xilinx Virtex-5 LX110T) and an older software suite (Xilinx ISE).
-Although there was a GUI, we had Makefiles to invoke each subsequent program in the toolchain to carry out the complete synthesis and perform analysis.
 
-Our new boards use Xilinx's updated design software, the Vivado Design Suite.
-Vivado has integrated scripting capabilities (using the Tcl language) and integration with other high-level design tools (e.g. High-Level Synthesis).
-The GUI itself has the disadvantage of being very manual to work with.
-Repeatedly changing and running parameters quickly becomes tedious.
-We will automate the design process after this lab, however, for learning, the GUI has the invaluable property of guiding us through each step of the process.
-Read through the following sections but don't worry about the details for now.
-We will run through the entire tool flow on a simple project at the end of this lab.
 
 \subsection{Open the Lab 1 project in the Vivado Design Suite}
 Now that you have cloned the \texttt{\repo} repository, you can \texttt{cd} to the \texttt{\repo/lab2} directory to see this lab's skeleton files.
@@ -147,8 +136,22 @@ To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{
 %\subsection{Toolchain Conclusion}
 %This section was information dense. Don't worry about understanding the internals of each tool and the exact file formats they work with, especially for different Xilinx software generations. Just understand what each step of the toolchain does at a high level and you will be good for this class. You will use these kinds of tools regularly, but for now let the staff worry about making sure they work in the first place.
 
-\section{Your First FPGA Design}
-Finally, let's build a simple example of a complete project. Throughout the semester, you will build increasingly complex designs using Verilog, a widely used hardware description language (HDL). For this lab, you will use basic Verilog to describe a simple digital circuit.
+\section{Overview of the FPGA Build Toolchainn}
+
+Before we begin the lab, we should familiarize ourselves with the CAD (computer aided design) tools that translate HDL (Verilog) into a working circuit on the FPGA.
+These tools will pass your design through several stages, each one bringing it closer to a concrete implementation.
+In previous years, older evaluation platforms (the ML505) used older FPGAs (a Xilinx Virtex-5 LX110T) and an older software suite (Xilinx ISE).
+Although there was a GUI, we had Makefiles to invoke each subsequent program in the toolchain to carry out the complete synthesis and perform analysis.
+
+Our new boards use Xilinx's updated design software, the Vivado Design Suite.
+Vivado has integrated scripting capabilities (using the Tcl language) and integration with other high-level design tools (e.g. High-Level Synthesis).
+The GUI itself has the disadvantage of being very manual to work with.
+Repeatedly changing and running parameters quickly becomes tedious.
+We will automate the design process after this lab, however, for learning, the GUI has the invaluable property of guiding us through each step of the process.
+
+
+\subsection{Verilog source file}
+Throughout the semester, you will build increasingly complex designs using Verilog, a widely used hardware description language (HDL). For this lab, you will use basic Verilog to describe a simple digital circuit.
 
 Open up the \verb|lab2/lab2.srcs/sources_1/new/z1top.v| source file.
 This file contains a Verilog module description which specifies which signals are inputs into the module and which signals are outputs.
@@ -174,6 +177,23 @@ The \verb|BUTTONS| input is a signal that is 4 bits wide (as indicated by the [3
 The \verb|LEDS| output is a signal that is 6 bits wide (as indicated by the [5:0] width descriptor). This output signal represents the logic signals coming out of the FPGA and going into the bank of LEDs at the bottom right of the Pynq-Z1, just above the buttons. Almost. There are only 4 LEDs there; 2 more are tri-color LEDs located just above the slide switches in the middle.
 
 In this file, we can describe how the slide switches, push buttons and LEDs are connected through the FPGA. There is one line of code that describes an AND gate that takes the values of one of the buttons and one of the slide switches, ANDs them together, and sends that signal out to the first LED. Let's put this digital circuit on the FPGA!
+
+
+\subsection{Open the Lab 1 project in the Vivado Design Suite}
+Now that you have cloned the \texttt{\repo} repository, you can \texttt{cd} to the \texttt{\repo/lab2} directory to see this lab's skeleton files.
+You will note that there is a \verb|lab2.srcs| (sources) directory and a \verb|lab2.xpr| (project) file.
+
+In our CentOS environment, press Alt-F2 to bring up a command dialog. Type the full path to the \texttt{vivado} binary to execute it:
+
+\begin{verbatim}
+/opt/Xilinx/Vivado/current/bin/vivado
+\end{verbatim}
+
+(You can also run this from a terminal or create a Desktop shortcut.)
+
+Once in Vivado, open up the \texttt{lab2/lab2.xpr} project file. Look around the environment to try and get a feel for the GUI.
+
+
 
 \subsection{Synthesize and Program}
 \begin{enumerate}
