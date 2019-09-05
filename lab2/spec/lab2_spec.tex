@@ -287,10 +287,24 @@ Execute the downloaded script.
   ./Xilinx_Vivado_SDK_Web_2019.1_0524_1430_Lin64.bin
 \end{minted}
 
-During the install process, you should only select the options we're going to use in this class to save disk space:
+During the install process, specify \texttt{/opt/Xilinx} as the install directory.
+Also, you should only select the install options we're going to use in this class to save disk space:
+
+\begin{center}
 \includegraphics[width=0.7\textwidth]{figs/vivado_install_options.png}
+\end{center}
+
+After it's done, install the Digilent drivers to program the Pynq over USB-JTAG.
+\begin{minted}{bash}
+  cd /opt/Xilinx/Vivado/2019.1/data/xicom/cable_drivers/lin64/install_script/install_drivers
+  sudo ./install_drivers
+\end{minted}
 
 \subsection{Windows}
+Download the `Vivado Design Suite - HLx Editions - 2019.1  Full Product Installation' Windows exe from \href{https://www.xilinx.com/support/download.html}{Xilinx}.
+You will need to create a Xilinx account.
+Execute the downloaded exe.
+Also, you should only select the install options we're going to use in this class to save disk space, as described in the Linux section.
 
 \subsection{Mac}
 
