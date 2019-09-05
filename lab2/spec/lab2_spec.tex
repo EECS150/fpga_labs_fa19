@@ -109,10 +109,9 @@ In our CentOS environment, press Alt-F2 to bring up a command dialog. Type the f
 Once in Vivado, open up the \texttt{lab2/lab2.xpr} project file. Look around the environment to try and get a feel for the GUI.
 
 \subsection{Synthesis}
-To run the synthesis step in the Vivado Design Suite (that is, turn your HDL into combinational and sequential logic), select \emph{Run Synthesis} in the \emph{Flow Navigator} pane to the left other interface. If this has been run before, the synthesized design can be inspected by selecting \emph{Open Synthesized Design}.
+To run the synthesis step in the Vivado Design Suite (that is, turn your HDL into combinational and sequential logic), select \emph{Run Synthesis} in the \emph{Flow Navigator} pane to the left other interface. If this has been run before, the synthesized design can be inspected by selecting \emph{Open Synthesized Design}. Select \texttt{Schematic} under ``Open Synthsized Design" on the left toolbar to see a circuit schematic.
 
 \subsection{Implementation}
-
 The implementation step in the Vivado GUI is equivalent to the translation, mapping and place and route steps in the manual pipeline. Again, this takes the logical circuit synthesized previously and maps it to the physical logic devices our particular FPGA actually has. Select \emph{Run Implementation} in the \emph{Flow Navigator} to run it, then select \emph{Open Implementation} to inspect its outputs.
 
 \subsection{Xilinx Design Constraints (XDC)}
@@ -122,7 +121,6 @@ The Xilinx Design Constraints file (with the \verb|.xdc| extension) specifies ti
 More information can be found on page 22 of the \href{https://www.xilinx.com/support/documentation/sw_manuals/xilinx2015_2/ug911-vivado-migration.pdf}{Vivado migration guide}.
 
 Take a look at this snippet from the XDC inside \verb|lab2/lab2.srcs/constrs_1/new/z1top.xdc|:
-
 \begin{minted}{tcl}
 set_property -dict { PACKAGE_PIN L19   IOSTANDARD LVCMOS33 } [get_ports { BUTTONS[3] }];
 \end{minted}
@@ -146,8 +144,8 @@ Reports are automatically generated at each step in the build flow. You should b
 \subsection{Programming the FPGA}
 To send the bitstream to the FPGA with the Vivado GUI, we have to use the \emph{Hardware Manager}. This is accessible under \emph{Program and Debug} in the \emph{Flow Navigator}, right under \emph{Generate Bitstream}. Once connected to your FPGA over the USB JTAG interface, you can select \emph{Program Device} in the \emph{Flow Navigator} (or in the \emph{Hardware Manager} pane that opens) to perform the programming.
 
-\subsection{Toolchain Conclusion}
-This section was information dense. Don't worry about understanding the internals of each tool and the exact file formats they work with, especially for different Xilinx software generations. Just understand what each step of the toolchain does at a high level and you will be good for this class. You will use these kinds of tools regularly, but for now let the staff worry about making sure they work in the first place.
+%\subsection{Toolchain Conclusion}
+%This section was information dense. Don't worry about understanding the internals of each tool and the exact file formats they work with, especially for different Xilinx software generations. Just understand what each step of the toolchain does at a high level and you will be good for this class. You will use these kinds of tools regularly, but for now let the staff worry about making sure they work in the first place.
 
 \section{Your First FPGA Design}
 Finally, let's build a simple example of a complete project. Throughout the semester, you will build increasingly complex designs using Verilog, a widely used hardware description language (HDL). For this lab, you will use basic Verilog to describe a simple digital circuit.
@@ -193,14 +191,16 @@ In this file, we can describe how the slide switches, push buttons and LEDs are 
   \item See if it worked! What happens when you push the BTN0 button? What about when you change SW0? Both?
 \end{enumerate}
 
-\section{A Structural and Behavioral Adder Design and also Inspecting the Schematic}
+\section{A Structural and Behavioral Adder Design and Inspecting the Schematic}
 
 \subsection{Build a Structural 14-bit Adder}
 To help you with this task, please refer to the `Code Generation with for-generate loops' slide in the Verilog Primer Slides (slide 35).
 
-Open the Lab 2 project (\verb|lab2.xpr|) in Vivado Design Suite from the lab repo (did you remember to \verb|git pull|?). Begin by opening \verb|lab2/lab2.srcs/sources_1/new/full_adder.v|; fill in the logic to produce the full adder outputs from the inputs. Then open \verb|structural_adder.v| and construct a ripple carry adder using the full adder cells you designed earlier and a `for-generate loop'.
-
-Finally, inspect the \verb|z1top.v| top-level module and see how your structural adder is instantiated and hooked up to the top-level signals. For now, just look at the \verb|user_adder| instance of your structural adder. As we learned in previous lab, the basic I/O options on the Z1 board are limited. How are we managing to input two 3-bit integers?
+\begin{enumerate}
+  \item Open \verb|lab2/lab2.srcs/sources_1/new/full_adder.v|; fill in the logic to produce the full adder outputs from the inputs
+  \item Open \verb|structural_adder.v| and construct a ripple carry adder using the full adder cells you designed earlier and a `for-generate loop'.
+  \item Finally, inspect the \verb|z1top.v| top-level module and see how your structural adder is instantiated and hooked up to the top-level signals. For now, just look at the \verb|user_adder| instance of your structural adder. As we learned in previous lab, the basic I/O options on the Z1 board are limited. How are we managing to input two 3-bit integers?
+\end{enumerate}
 
 Run Synthesis, Implementation, and Generate the Bitstream for your design. (Remember that, in the GUI, you can select a later step in the pipeline and have all prerequisite steps performed automatically when prompted.) Program the board. Test out your design and see that you get the correct results from your adder. You should try entering different binary numbers into your adder with the switches and buttons and see that the correct sum is displayed on the GPIO LEDs.
 
