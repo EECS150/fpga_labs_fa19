@@ -32,11 +32,9 @@ College of Engineering, University of California, Berkeley}
 Before you proceed with the contents of this lab, we suggest that you look through these two documents that will help you better understand some Verilog constructs.
 
 \begin{enumerate}
-	\item \textbf{\RepoRootPath/resources/Verilog/wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
-	
-	\item \textbf{\RepoRootPath/resources/Verilog/always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
-	
-	%\item \textbf{\RepoRootPath/resources/Verilog/verilog\_fsm.pdf} - An overview of how to create finite state machines in Verilog, specifying their state transitions and machine outputs.
+  \item \textbf{\RepoRootPath/resources/Verilog/wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
+  \item \textbf{\RepoRootPath/resources/Verilog/always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
+  %\item \textbf{\RepoRootPath/resources/Verilog/verilog\_fsm.pdf} - An overview of how to create finite state machines in Verilog, specifying their state transitions and machine outputs.
 \end{enumerate}
 
 The first couple sections of this lab focus on simulation and it would be valuable to read these documents before starting.
@@ -185,7 +183,7 @@ This is clock signal generation code. The clock signal needs to be generated in 
 tone_generator audio_controller (
     .clk(clock),
     .output_enable(output_enable),
-	.tone_switch_period(tone_to_play),
+    .tone_switch_period(tone_to_play),
     .square_wave_out(sq_wave)
 );
 \end{minted}
@@ -197,10 +195,10 @@ initial begin
     output_enable <= 0;
     #(10 * `MS);
     output_enable <= 1;
-    
+
     tone_to_play <= 24'd37500;
     #(200 * `MS);
-   
+
     ...
     $finish();
 end
@@ -440,7 +438,7 @@ The first script will parse a MusicXML file and turn it into a list of \verb|ton
 Take a look at \verb|music.txt| and \verb|src/rom.v|. You can download your own music in MusicXML format from here (\url{https://musescore.org/}) and run it through the same parser; it should ideally only have one part to work properly. You can also directly edit the \verb|music.txt| file to customize the contents of the ROM as you wish.
 
 \section{Design of the music\_streamer}
-Open up the \verb|music_streamer.v| file. You will need to modify this module to contain an instance of the ROM you created earlier and logic to address the ROM sequentially to play notes. The \verb|music_streamer| will play each note in the ROM for a predefined amount of time by sending it to the \verb|tone_generator|. 
+Open up the \verb|music_streamer.v| file. You will need to modify this module to contain an instance of the ROM you created earlier and logic to address the ROM sequentially to play notes. The \verb|music_streamer| will play each note in the ROM for a predefined amount of time by sending it to the \verb|tone_generator|.
 
 We will play each note for 1/25th of a second. Calculate what that is in terms of 125Mhz clock cycles.
 
@@ -448,7 +446,7 @@ Now let's begin the design of the \verb|music_streamer| itself. Instantiate your
 
 Next, write the RTL that will increment the address supplied to the ROM every \textbf{1/25th of a second}. The data coming out of the ROM should be fed to the \verb|tone| output. The ROM's address input should go from 0 to the depth of the ROM and should then loop around back to 0. You don't have a reset signal, so define the initial state of any registers in your design for simulation purposes. Also hook up the \verb|rom_address| output to the ROM address currently being accessed.
 
-Now that you have implemented \verb|music_streamer|, create an instance of it in the module \verb|z1top.v|. Use the instance name \verb|streamer| to match the expected name in the \verb|.do| file. Instantiate a \verb|tone_generator| and wire \verb|SWITCHES[1]| to \verb|output_enable|, \verb|CLK_125MHZ_FPGA| to \verb|clk|, and \verb|aud_pwm| to \verb|square_wave_out|.  Assign \verb|aud_sd| to 1.  Connect the \verb|tone| output of the \verb|music_streamer| to the \verb|tone_switch_period| input of the \verb|tone_generator|. Connect the \verb|music_streamer|'s \verb|clk| input to the global clock signal. Finally, connect  its \verb|rom_address| output to the \verb|LEDS|s by routing the top 6 bits of address.  
+Now that you have implemented \verb|music_streamer|, create an instance of it in the module \verb|z1top.v|. Use the instance name \verb|streamer| to match the expected name in the \verb|.do| file. Instantiate a \verb|tone_generator| and wire \verb|SWITCHES[1]| to \verb|output_enable|, \verb|CLK_125MHZ_FPGA| to \verb|clk|, and \verb|aud_pwm| to \verb|square_wave_out|.  Assign \verb|aud_sd| to 1.  Connect the \verb|tone| output of the \verb|music_streamer| to the \verb|tone_switch_period| input of the \verb|tone_generator|. Connect the \verb|music_streamer|'s \verb|clk| input to the global clock signal. Finally, connect  its \verb|rom_address| output to the \verb|LEDS|s by routing the top 6 bits of address.
 
 \section{Simulating the music\_streamer}
 To simulate your \verb|music_streamer| open up the \verb|lab3/src/music_streamer_testbench.v|. In contrast to the \verb|tone_generator_testbench| where the \verb|tone_generator| was instantiated in isolation, in this testbench we are instantiating our entire top-level design, \verb|z1top|. This testbench is referred to as a system-level testbench, which tests our entire design using top-level I/O, in contrast to the \verb|tone_generator_testbench| which is a block-level testbench. This is similar to the difference between unit and integration tests in software development.
@@ -506,7 +504,7 @@ Each of these command will bring up a text editor (probably vim) with a summary 
 In this class you will interacting with 2 GitHub repositories :
 \begin{itemize}
 \item a public repository maintained by the lab staff which contains the skeleton code for each lab
-\item a private repository where you will store your solutions to the lab 
+\item a private repository where you will store your solutions to the lab
 \end{itemize}
 
 Earlier in lab 1, you cloned the public repository maintained by the lab staff.  This repository allows you to pull new updates that the lab staff post.  Your private repository can be viewed via a web browser at \verb|https://github.com/EECS150/sp19-eecs151-####| where \verb|###| is the three characters in your eecs151 instructional account.  Make sure you can access the web page for your repository.  Because it is private, you will need to be signed into GitHub to see it.  You may also need to accept an invitation sent to the e-mail address you registered with GitHub.
