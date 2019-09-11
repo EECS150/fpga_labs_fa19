@@ -184,14 +184,19 @@ Let's go through what every line of this testbench does.
 `timescale 1ns/1ns
 \end{minted}
 
-The timescale declaration needs to be at the top of every testbench file. It provides information to the circuit simulator about the timing parameters of the simulation.
+The timescale declaration needs to be at the top of every testbench file.
 \begin{minted}{verilog}
 `timescale (simulation step time)/(simulation resolution)
 \end{minted}
 
-The first argument to the timescale declaration is the simulation step time. It defines the chunks of discrete time in which the simulation should proceed. In this case, we have defined the simulation step time to be one nanosecond. This means that we can advance the simulation time by as little as 1ns at a time.
+The first argument to the timescale declaration is the simulation step time.
+It defines the granularity of discrete time units in which the simulation advances.
+In this case, we have defined the simulation step time to be one nanosecond, so we can advance the simulation time by as little as 1ns at a time.
 
-The second argument to the timescale declaration is the simulation resolution. In our example it is also 1ns. The resolution allows the simulator to model transient behavior of your circuit in between simulation time steps. For this lab, we aren't modeling any gate delays, so the resolution can equal the step time.
+The second argument to the timescale declaration is the simulation resolution.
+In our example it is also 1ns.
+The resolution allows the simulator to model transient behavior of your circuit in between simulation time steps.
+For this lab, we aren't modeling any gate delays, so the resolution can safely equal the step time.
 
 \begin{minted}{verilog}
 `define SECOND 1000000000
@@ -200,146 +205,122 @@ The second argument to the timescale declaration is the simulation resolution. I
 `define SAMPLE_PERIOD 22675.7
 \end{minted}
 
-These are some macros defined for our testbench. They are constant values you can use when writing your testbench to simplify your code and make it obvious what certain numbers mean. For example, \verb|SECOND| is defined as the number of nanoseconds in one second. The \verb|SAMPLE_PERIOD| is the sampling period used to sample the square wave output of the \verb|tone_generator| at a standard 44.1 kHz sample rate.
+These are some macros defined for our testbench.
+They are constant values you can use when writing your testbench to simplify your code and make it obvious what certain numbers mean.
+For example, \verb|SECOND| is defined as the number of nanoseconds in one second.
+The \verb|SAMPLE_PERIOD| is the sampling period used to sample the square wave output of the \verb|tone_generator| at a standard 44.1 kHz sample rate.
 
 \begin{minted}[tabsize=4]{verilog}
 module tone_generator_testbench();
-	// Testbench code goes here
+  // Testbench code goes here
 endmodule
 \end{minted}
 
-This module is a testbench module. It is not actually synthesized to be placed on an FPGA, but rather it is to be run by a circuit simulator. All your testbench code goes in this module. We will instantiate our DUT (device under test) in this module.
+\verb|tone_generator_testbench| is a testbench module.
+It is not intended to be placed on an FPGA, but rather it is to be run by a circuit simulator.
+All your testbench code goes in this module.
+We will instantiate our DUT (device under test) in this module.
 
 \begin{minted}{verilog}
 reg clock;
 reg output_enable;
+reg volume = 0;
 reg [23:0] tone_to_play;
 wire sq_wave;
 \end{minted}
 
-Here are the inputs and outputs of our \verb|tone_generator|. You will notice that the inputs to the \verb|tone_generator| are declared as \verb|reg| type nets and the outputs are declared as \verb|wire| type nets. This is because we will be driving the inputs in our testbench and we will be monitoring the output.
+Here are the inputs and outputs of our \verb|tone_generator|.
+Notice that the inputs to the \verb|tone_generator| are declared as \verb|reg| type nets and the outputs are declared as \verb|wire| type nets.
+This is because we will be driving the inputs in our testbench inside an \verb|initial| block and we will be reading the output.
+Note we can set the initial value of \verb|reg| nets in the testbench to drive a particular value into the DUT at time 0 (e.g. \verb|volume|).
 
 \begin{minted}{verilog}
 initial clock = 0;
 always #(4) clock <= ~clock;
 \end{minted}
 
-This is clock signal generation code. The clock signal needs to be generated in our testbench so it can be fed to the DUT. The initial statement sets the value of the clock net to 0 at the very start of the simulation. The next line toggles the clock signal every 4ns, i.e. half period of 125 MHz clock.
+This is the clock generation code.
+The clock signal needs to be generated in our testbench so it can be fed to the DUT.
+The initial statement sets the value of the clock net to 0 at the very start of the simulation.
+The next line toggles the clock signal every 4ns, i.e. half period of 125 MHz clock.
 
 \begin{minted}[tabsize=4]{verilog}
 tone_generator audio_controller (
     .clk(clock),
     .output_enable(output_enable),
     .tone_switch_period(tone_to_play),
+    .volume(volume),
     .square_wave_out(sq_wave)
 );
 \end{minted}
 
-Now we instantiate the DUT and connect its ports to the nets we have access to in our testbench.
+Now we instantiate the DUT and connect its ports to the nets we have declared in our testbench.
 
 \begin{minted}[tabsize=4]{verilog}
 initial begin
-    output_enable <= 0;
+    tone_to_play = 24'd0;
+    output_enable = 1'b0;
     #(10 * `MS);
-    output_enable <= 1;
+    output_enable = 1'b1;
 
-    tone_to_play <= 24'd37500;
+    tone_to_play = 24'd37500;
     #(200 * `MS);
-
     ...
     $finish();
 end
 \end{minted}
 
-Here is the body of our testbench. The \verb|initial begin ... end| block specifies the `main()' function for our testbench. It is the execution entry point for our simulator. In the \verb|initial| block, we can set the inputs that flow into our DUT using non-blocking (\verb|<=|) or blocking (\verb|=|) assignments.
+This is the body of our testbench.
+The \verb|initial begin ... end| block is the `main()' function for our testbench, and where the simulation begins execution.
+In the \verb|initial| block we drive the DUT inputs using blocking (\verb|=|) assignments.
 
-We can also order the simulator to advance simulation time using delay statements. A delay statement takes the form \verb|#(delay in time steps);|. For instance the statement \verb|#(100);| would run the simulation for 100ns.
+We can also order the simulator to advance simulation time using delay statements.
+A delay statement takes the form \verb|#(delay in time steps);|.
+For instance the statement \verb|#(100);| would run the simulation for 100ns.
 
-In this case, we set \verb|output_enable| to 0 at the start of the simulation, then we let the simulation run for 10ms, then we set \verb|output_enable| to 1. We then change the \verb|tone_to_play| several times, and give the \verb|tone_generator| some time to produce the various tones.
-
-%For now, the \verb|tone_to_play| signal won't affect your \verb|tone_generator| which should only be playing a fixed 220 Hz tone.
+In this case, we set \verb|output_enable| to 0 at the start of the simulation, let the simulation run for 10ms, then set \verb|output_enable| to 1.
+Then \verb|tone_to_play| is changed several times, and the \verb|tone_generator| is given some time to produce the various tones.
 
 The final statement is a system function: the \verb|$finish()| function tells the simulator to halt the simulation.
 
 \begin{minted}[tabsize=4]{verilog}
 integer file;
 initial begin
-	file = $fopen("output.txt", "w");
-	forever begin
-		$fwrite(file, "%h\n", sq_wave);
-		#(`SAMPLE_PERIOD);
-	end
+  file = $fopen("output.txt", "w");
+  forever begin
+    $fwrite(file, "%h\n", sq_wave);
+    #(`SAMPLE_PERIOD);
+  end
 end
 \end{minted}
 
-This piece of code is written in a separate \verb|initial begin ... end| block. The simulator treats both blocks as separate threads that both start execution at the beginning of the simulation and operate in parallel.
+This piece of code is written in a separate \verb|initial begin ... end| block.
+The simulator treats both \verb|initial| blocks as separate threads that both start execution at the beginning of the simulation and run in parallel.
 
-This block of code uses two system functions \verb|$fopen() and $fwrite()|, that allow us to write to a file. The \verb|forever begin| construct tells the simulator to run the chunk of code inside it continuously until the simulation ends.
+This block of code uses two system functions \verb|$fopen()| and \verb|$fwrite()|, that allow us to write to a file.
+The \verb|forever begin| construct tells the simulator to run the chunk of code inside it continuously until the simulation ends.
 
-In the \verb|forever begin| block, we sample the \verb|square_wave_out| output of the \verb|tone_generator| and save it in a file. We sample this value every \verb|`SAMPLE_PERIOD| nanoseconds which corresponds to a 44.1 kHz sampling rate. Your \verb|tone_generator|'s output is stored as 1s and 0s in a text file that can be converted to an audio file to hear how your circuit will sound when deployed on the FPGA.
+In the \verb|forever begin| block, we sample the \verb|square_wave_out| output of the \verb|tone_generator| and save it in \verb|output.txt|.
+We sample this value every \verb|`SAMPLE_PERIOD| nanoseconds which corresponds to a 44.1 kHz sampling rate.
+The \verb|tone_generator|'s output is stored as 1s and 0s in \verb|output.txt| that can be converted to an audio file to hear how your circuit will sound when deployed on the FPGA.
 
-\section{Top-Level Wiring and Tone Generator on the FPGA}
+\subsection{Running the Simulation}
+There are 3 RTL simulators we can use.
 
-Then open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.
-Connect \verb|square_wave_out| to \verb|aud_pwm|.
-Set \verb|aud_sd| to 1, to enable the audio output.
-
-Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
-Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
-Ask a TA if you need help here.
-
-Program the FPGA by running \texttt{make program}.
-Plug in headphones and make sure you hear a buzzing noise at 220Hz; compare the tone with a \href{https://www.szynalski.com/tone-generator/}{reference generator}.
-To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
-
-%Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
-
-%Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
-
-\section{Enhancements}
-\subsection{Switching the Wave On and Off}
-Now you have a tone, but it can't be toggled on and off without pulling the power to the FPGA board. Let's use the \verb|output_enable| input of the \verb|tone_generator| module to gate the square wave output. When \verb|output_enable| is 0, you should pass 0 to the \verb|square_wave_out| output, but when \verb|output_enable| is 1, you should pass your square wave to \verb|square_wave_out|.
-
-Wire up the \verb|output_enable| signal to the first slide switch (\verb|SWITCHES[0]|) in \verb|z1top|.
-
-Run your design flow. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board through the hardware manager. You should now hear a buzzing noise at 220Hz that can be turned on or off by toggling the first slide switch.
-
-You should verify that the tone is indeed 220 Hz by comparing it to a reference tone here: \url{http://onlinetonegenerator.com/}.
-
-\subsection{Volume Adjustment}
-
-\subsection{Design a Configurable Frequency tone\_generator}
-
-Let's extend our \verb|tone_generator| so that it can play different notes. You may start by adding a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|. Note you will also have to modify your \verb|clock_counter| to be 24 bits wide.
-
-The \verb|tone_switch_period| describes how often the square wave output switches from high to low or low to high. For example a \verb|tone_switch_period| of 284091 (0 d.p.) tells us to invert the square wave output every 142045 clock cycles, which for a 125 Mhz clock translates to a $\sim 440$ Hz square wave. Here is the derivation:
-
-\begin{eqnarray}
-  \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
-  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber
-\end{eqnarray}
-
-You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
-
-You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
-
-\subsubsection{Try the Configurable Frequency tone\_generator on the FPGA}
-Modify the top-level Verilog module \verb|z1top.v| to include the new input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|SWITCHES[0]| and \verb|BUTTONS[3:0]|, left-shifted by 9 bits (effectively a multiplication by 512). This will allow you to control the \verb|tone_switch_period| from 512 to 15872. Leave \verb|SWITCHES[1]| to control \verb|output_enable| initially; later, you can use it as an extra bit's worth of input. Here is a code snippet (incomplete):
-
-\begin{minted}[tabsize=4]{verilog}
-    tone_generator audio_controller (
-        .output_enable(SWITCHES[1]),
-        .tone_switch_period({18'd0, SWITCHES[0], BUTTONS[3:0]} << 9),
-    );
+\subsubsection{VCS}
+If you're using the lab machines, you should use VCS:
+\begin{minted}{bash}
+  make sim/tone_generator_testbench.vpd
+\end{minted}
+This will generate a waveform file \verb|sim/tone_generator_testbench.vpd| which you can view using \verb|dve|.
+Login to the lab machines physically or use X2go and run:
+\begin{minted}{bash}
+  dve sim/tone_generator_testbench.vpd &
 \end{minted}
 
-What other way(s) do you have to digitally mute your output signal?
+\subsubsection{XSIM}
 
-Is the width of the bus assigned to \verb|tone_switch_period| correct? Does it matter?
-
-Run the usual synthesis, implementation and programming flow to put your new \verb|tone_generator| on the FPGA. Verify that toggling the switches and buttons changes the frequency of your \verb|tone_generator|.
-
-\section{Simulating the tone\_generator from Lab 2}
+\subsubsection{iverilog}
 
 \subsection{A Choice of Simulators}
 
@@ -509,6 +490,69 @@ Running simulations, both for ModelSim and in Vivado, generates a lot of signal 
   \item For \textbf{ModelSim}, navigate to the \verb|sim| directory in which you executed \verb|make CASES=|, e.g. \textbf{\RepoRootPath/lab3/sim}. There, execute \verb|make clean|.
   \item For \textbf{Vivado}, open the \emph{Tcl Console}. It's usually available toward the bottom-left of the application window, but can also be opened from the menus. In the Tcl Console, execute \verb|reset_simulation|.
 \end{enumerate}
+
+\section{Top-Level Wiring and Tone Generator on the FPGA}
+
+Then open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.
+Connect \verb|square_wave_out| to \verb|aud_pwm|.
+Set \verb|aud_sd| to 1, to enable the audio output.
+
+Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
+Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
+Ask a TA if you need help here.
+
+Program the FPGA by running \texttt{make program}.
+Plug in headphones and make sure you hear a buzzing noise at 220Hz; compare the tone with a \href{https://www.szynalski.com/tone-generator/}{reference generator}.
+To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
+
+%Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
+
+%Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
+
+\section{Enhancements}
+\subsection{Switching the Wave On and Off}
+Now you have a tone, but it can't be toggled on and off without pulling the power to the FPGA board. Let's use the \verb|output_enable| input of the \verb|tone_generator| module to gate the square wave output. When \verb|output_enable| is 0, you should pass 0 to the \verb|square_wave_out| output, but when \verb|output_enable| is 1, you should pass your square wave to \verb|square_wave_out|.
+
+Wire up the \verb|output_enable| signal to the first slide switch (\verb|SWITCHES[0]|) in \verb|z1top|.
+
+Run your design flow. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board through the hardware manager. You should now hear a buzzing noise at 220Hz that can be turned on or off by toggling the first slide switch.
+
+You should verify that the tone is indeed 220 Hz by comparing it to a reference tone here: \url{http://onlinetonegenerator.com/}.
+
+\subsection{Volume Adjustment}
+
+\subsection{Design a Configurable Frequency tone\_generator}
+
+Let's extend our \verb|tone_generator| so that it can play different notes. You may start by adding a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|. Note you will also have to modify your \verb|clock_counter| to be 24 bits wide.
+
+The \verb|tone_switch_period| describes how often the square wave output switches from high to low or low to high. For example a \verb|tone_switch_period| of 284091 (0 d.p.) tells us to invert the square wave output every 142045 clock cycles, which for a 125 Mhz clock translates to a $\sim 440$ Hz square wave. Here is the derivation:
+
+\begin{eqnarray}
+  \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
+  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber
+\end{eqnarray}
+
+You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
+
+You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
+
+\subsubsection{Try the Configurable Frequency tone\_generator on the FPGA}
+Modify the top-level Verilog module \verb|z1top.v| to include the new input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|SWITCHES[0]| and \verb|BUTTONS[3:0]|, left-shifted by 9 bits (effectively a multiplication by 512). This will allow you to control the \verb|tone_switch_period| from 512 to 15872. Leave \verb|SWITCHES[1]| to control \verb|output_enable| initially; later, you can use it as an extra bit's worth of input. Here is a code snippet (incomplete):
+
+\begin{minted}[tabsize=4]{verilog}
+    tone_generator audio_controller (
+        .output_enable(SWITCHES[1]),
+        .tone_switch_period({18'd0, SWITCHES[0], BUTTONS[3:0]} << 9),
+    );
+\end{minted}
+
+What other way(s) do you have to digitally mute your output signal?
+
+Is the width of the bus assigned to \verb|tone_switch_period| correct? Does it matter?
+
+Run the usual synthesis, implementation and programming flow to put your new \verb|tone_generator| on the FPGA. Verify that toggling the switches and buttons changes the frequency of your \verb|tone_generator|.
+
+
 
 \section{Introduction to Inferred Asynchronous ROMs}
 An asynchronous memory is a memory block that isn't governed by a clock. In this lab, we will use a Python script to generate a ROM block in Verilog.
