@@ -16,5 +16,5 @@ write_checkpoint -force ${TOP}.dcp
 report_timing_summary -file post_synth_timing_summary.rpt
 report_drc -file post_synth_drc.rpt
 report_utilization -file post_synth_utilization.rpt
-write_verilog -file post_synth.v
+write_verilog -force -file post_synth.v
 write_xdc -force -file post_synth.xdc
