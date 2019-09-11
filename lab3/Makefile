@@ -1,3 +1,4 @@
+SHELL                   := $(shell which bash) -o pipefail
 ABS_TOP                 := $(subst /cygdrive/c/,C:/, $(shell pwd))
 VIVADO                  ?= vivado
 VIVADO_OPTS             ?= -nolog -nojournal -mode batch
