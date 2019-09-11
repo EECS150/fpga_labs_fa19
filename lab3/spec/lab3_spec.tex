@@ -4,7 +4,6 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 % formatting
-\usepackage{fullpage}
 \usepackage{verbatim}
 \usepackage{moreverb}
 \usepackage{minted}
@@ -29,16 +28,88 @@ title={Question \thetcbcounter: #1},label={#2}},
 \newtcolorbox[auto counter]{texexptitled}[3][]{%
 example={#2}{#3},#1}
 
+\setlength{\topmargin}{-0.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+
+% Useful macros
+
+\newcommand{\note}[1]{{\bf [ NOTE: #1 ]}}
+\newcommand{\fixme}[1]{{\bf [ FIXME: #1 ]}}
+\newcommand{\wunits}[2]{\mbox{#1\,#2}}
+\newcommand{\um}{\mbox{$\mu$m}}
+\newcommand{\xum}[1]{\wunits{#1}{\um}}
+\newcommand{\by}[2]{\mbox{#1$\times$#2}}
+\newcommand{\byby}[3]{\mbox{#1$\times$#2$\times$#3}}
+
+
+\newenvironment{tightlist}
+{\begin{itemize}
+ \setlength{\parsep}{0pt}
+ \setlength{\itemsep}{-2pt}}
+{\end{itemize}}
+
+\newenvironment{titledtightlist}[1]
+{\noindent
+ ~~\textbf{#1}
+ \begin{itemize}
+ \setlength{\parsep}{0pt}
+ \setlength{\itemsep}{-2pt}}
+{\end{itemize}}
+
+% Change spacing before and after section headers
+
+\makeatletter
+\renewcommand{\section}
+{\@startsection {section}{1}{0pt}
+ {-2ex}
+ {1ex}
+ {\bfseries\Large}}
+\makeatother
+
+\makeatletter
+\renewcommand{\subsection}
+{\@startsection {subsection}{1}{0pt}
+ {-1ex}
+ {0.5ex}
+ {\bfseries\normalsize}}
+\makeatother
+
+% Reduce likelihood of a single line at the top/bottom of page
+
+\clubpenalty=2000
+\widowpenalty=2000
+
+% Other commands and parameters
+
+\pagestyle{myheadings}
+\setlength{\parindent}{0in}
+\setlength{\parskip}{10pt}
+
+% Commands for register format figures.
+
+\newcommand{\instbit}[1]{\mbox{\scriptsize #1}}
+\newcommand{\instbitrange}[2]{\instbit{#1} \hfill \instbit{#2}}
+
+
 
 \begin{document}
-\title{EECS 151/251A FPGA Lab\\
-Lab 3: Tone Generator, Simulation, Connecting Modules, and Memories}
+
+\def\PYZsq{\textquotesingle}
+\title{\vspace{-0.4in}\Large \bf EECS 151/251A FPGA Lab 3:\\Tone Generator, Simulation, Connecting Modules, and Memories\vspace{-0.1in}}
 
 \author{Prof. Borivoje Nikolic and Prof. Sophia Shao \\
 TAs: Cem Yalcin, Rebekah Zhao, Ryan Kaveh, Vighnesh Iyer \\ Department of Electrical Engineering and Computer Sciences\\
 College of Engineering, University of California, Berkeley}
 \date{}
 \maketitle
+
+
+\newcommand{\headertext}{EECS 151/251A FPGA Lab 2: Simulation and Sequential Circuits}
+\markboth{\headertext}{\headertext}
+\thispagestyle{empty}
 
 \section{Before You Start This Lab}
 
@@ -47,13 +118,7 @@ Before you proceed with the contents of this lab, we suggest that you look throu
 \begin{enumerate}
   \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/wire_vs_reg.pdf}{wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
   \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/always_at_blocks.pdf}{always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
-  %\item \textbf{\RepoRootPath/resources/Verilog/verilog\_fsm.pdf} - An overview of how to create finite state machines in Verilog, specifying their state transitions and machine outputs.
 \end{enumerate}
-
-%The first couple sections of this lab focus on simulation and it would be valuable to read these documents before starting.
-
-%\subsection{Helpful Hint: Synthesis Warnings and Errors}
-%At various times in this lab, things will just not work on the FPGA or in simulation. To help with debugging, you can run the Synthesis step in your project from within Vivado. Have a look at the Synthesis messages that are generated as result. You can view them from the \emph{Project Summary} window or from within the \emph{Synthesized Design} window. Also remember that you can view all toolchain messages by selecting \emph{Window} $\rightarrow$ \emph{Messages}. Any synthesis warnings you see here could reveal a possible issue in your circuit. If you don't understand a warning, ask a TA.
 
 \section{Designing a Tone Generator}
 Let's create a tone generator/buzzer on the FPGA.
@@ -62,8 +127,6 @@ Let's create a tone generator/buzzer on the FPGA.
 Look at the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual}.
 Read Section 11 about the clock sources available on the Pynq.
 We are using the 125 MHz clock from the Ethernet PHY IC on the Pynq board connected to pin H12 of the FPGA chip.
-%Clock signals are generated outside the FPGA by a crystal oscillator or a programmable clock generator IC.
-%These clock signals are then connected to pin(s) on the FPGA so that they can be used in your Verilog design.
 
 Look at the \texttt{src/z1top.v} top-level module and its \verb|CLK_125MHZ_FPGA| input.
 \begin{minted}{verilog}
@@ -74,28 +137,22 @@ module z1top (
 \end{minted}
 Next take a look at the constraints in \texttt{src/PYNQ-Z1\_C.xdc} and notice how the LOC for the clock net is set to H16, just as specified in the Pynq-Z1 Reference Manual.
 \begin{minted}{tcl}
-set_property -dict { PACKAGE_PIN H16 IOSTANDARD LVCMOS33 } [get_ports { CLK_125MHZ_FPGA }];
+set_property -dict { PACKAGE_PIN H16 IOSTANDARD LVCMOS33 } \
+  [get_ports { CLK_125MHZ_FPGA }];
 \end{minted}
 This is how we map top-level signals in Verilog to the physical FPGA pins they are connected to.
 We can access the clock signal from our Verilog top-level module and can propagate this clock signal to any submodules that may need it.
-%Are any other clocks available? The 125 MHz clock signal we will use is actually generated by the Ethernet chip as a cost-saving manoeuvre: it actually gets disabled when the Ethernet chip is reset.
 
 \subsection{Audio Out}
 Look at Section 14 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual} which describes the mono audio out feature on the Pynq board.
 
-The FPGA pin R18 is connected to the \verb|AUD_PWN| net.
+The FPGA pin R18 is connected to the \verb|AUD_PWM| net.
 The FPGA can drive this net with a PWM signal which goes through a low-pass filter and is driven into the audio jack on the Pynq board.
 
 There's also an \verb|AUD_SD| net connected to FPGA pin T17, which turns off the opamps in the low-pass filter.
+Setting \verb|AUD_SD| to 1 enables the audio output.
 
 Find these signals in the \texttt{src/PYNQ-Z1\_C.xdc} file, and note how they appear in the \texttt{src/z1top.v} port list.
-%As described in the Pynq Reference Manual, our evaluation boards have several other neat peripherals (and even a few expansion ports). One feature is mono (single-channel) audio out: take a look at page 18. A Sallen-Key Butterworth low-pass filter is used at the output of another standard logic interface to the FPGA. This filter ``smooths out'' a pulse-width-modulated (PWM) signal to generated sinusoidal signals for driving a (low-power) external speaker. To learn more about how PWM will help generate an output waveform, read on to page 19. Aside: why is it a low-pass filter? What is the frequency response of the filter and why is it chosen as such?
-
-%\subsection{Enabling the Audio Out signal in the constraints file}
-
-%The description of Audio Out in the Reference Manual tells us which are the relevant pins on the FPGA. Let's add the Audio Out connection to the XDC constraints file. Uncomment lines 63 and 64 of \verb|PYNQ-Z1_C.xdc|, which is the master XDC file we will be using throughout the semester. These lines specify that the two relevant signals (\verb|aud_pwm| and \verb|aud_sd|) are connected to pins R18 and T17, respectively. Additionally, add the two signals to the top-level module \verb|z1top.v| so that they can be used in the design. (Should these be inputs or outputs?)
-
-%Ask a TA if you need help for this part.
 
 \subsection{Generating a Square Wave}
 Let's play a 220 Hz square wave out of the Mono Audio Out port on the Pynq.
@@ -112,80 +169,16 @@ Find the following:
 \end{texexptitled}
 
 Open \verb|src/tone_generator.v| and design a circuit to output a 220Hz square wave on the \verb|square_wave_out| output.
-Ignore the \verb|tone_switch_period| and \verb|output_enable| inputs for now.
+Ignore the \verb|tone_switch_period|, \verb|output_enable|, and \verb|volume| inputs for now.
 
-Then open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.
-Connect \verb|square_wave_out| to \verb|aud_pwm|.
-Set \verb|aud_sd| to 1, to enable the audio output.
-
-Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
-Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
-Ask a TA if you need help here.
-
-Program the FPGA by running \texttt{make program}.
-Plug in headphones and make sure you hear a buzzing noise at 220Hz; compare the tone with a \href{https://www.szynalski.com/tone-generator/}{reference generator}.
-To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
-
-%Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
-
-%Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
-
-\subsection{Switching the Wave On and Off}
-Now you have a tone, but it can't be toggled on and off without pulling the power to the FPGA board. Let's use the \verb|output_enable| input of the \verb|tone_generator| module to gate the square wave output. When \verb|output_enable| is 0, you should pass 0 to the \verb|square_wave_out| output, but when \verb|output_enable| is 1, you should pass your square wave to \verb|square_wave_out|.
-
-Wire up the \verb|output_enable| signal to the first slide switch (\verb|SWITCHES[0]|) in \verb|z1top|.
-
-Run your design flow. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board through the hardware manager. You should now hear a buzzing noise at 220Hz that can be turned on or off by toggling the first slide switch.
-
-You should verify that the tone is indeed 220 Hz by comparing it to a reference tone here: \url{http://onlinetonegenerator.com/}.
-
-\section{Design a Configurable Frequency tone\_generator}
-
-Let's extend our \verb|tone_generator| so that it can play different notes. You may start by adding a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|. Note you will also have to modify your \verb|clock_counter| to be 24 bits wide.
-
-The \verb|tone_switch_period| describes how often the square wave output switches from high to low or low to high. For example a \verb|tone_switch_period| of 284091 (0 d.p.) tells us to invert the square wave output every 142045 clock cycles, which for a 125 Mhz clock translates to a $\sim 440$ Hz square wave. Here is the derivation:
-
-\begin{eqnarray}
-  \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
-  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber
-\end{eqnarray}
-
-You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
-
-You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
-
-\subsection{Try the Configurable Frequency tone\_generator on the FPGA}
-Modify the top-level Verilog module \verb|z1top.v| to include the new input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|SWITCHES[0]| and \verb|BUTTONS[3:0]|, left-shifted by 9 bits (effectively a multiplication by 512). This will allow you to control the \verb|tone_switch_period| from 512 to 15872. Leave \verb|SWITCHES[1]| to control \verb|output_enable| initially; later, you can use it as an extra bit's worth of input. Here is a code snippet (incomplete):
-
-\begin{minted}[tabsize=4]{verilog}
-    tone_generator audio_controller (
-        .output_enable(SWITCHES[1]),
-        .tone_switch_period({18'd0, SWITCHES[0], BUTTONS[3:0]} << 9),
-    );
-\end{minted}
-
-What other way(s) do you have to digitally mute your output signal?
-
-Is the width of the bus assigned to \verb|tone_switch_period| correct? Does it matter?
-
-Run the usual synthesis, implementation and programming flow to put your new \verb|tone_generator| on the FPGA. Verify that toggling the switches and buttons changes the frequency of your \verb|tone_generator|.
-
-\section{Lab Overview}
-
-In this lab, we will begin by taking your configurable frequency \verb|tone_generator| design from Lab 2 and simulating it in software. We will learn how to use ModelSim and/or Vivado to view waveforms and debug your circuits. You will then construct a module that can pull tones to play from a memory block and send them to your \verb|tone_generator|.
-
-\section{Simulating the tone\_generator from Lab 2}
-
-\subsection{Copying Your Lab 2 Code}
-
-Run \verb|git pull| in your git cloned \RepoRootPath directory to fetch the latest skeleton files.
-
-Begin by copying your \verb|tone_generator| implementation into the \verb|lab3/lab3.srcs/sources_1/new/| \\ \verb|tone_generator.v| file.
-
-Let's run some simulations on the \verb|tone_generator| in software. To do this, we will need to use a Verilog testbench. A Verilog testbench is designed to test a Verilog module by supplying it with the inputs it needs (stimulus signals) and testing whether the outputs of the module match what we expect.
+\section{Simulating the Tone Generator}
+Let's run some simulations on the \verb|tone_generator| in software to check it works before putting it on the FPGA.
+To do this, we will need to use a Verilog testbench.
+A Verilog testbench is designed to test a Verilog module by supplying it with the inputs it needs (stimulus signals) and testing whether the outputs of the module match what we expect.
 
 \subsection{Overview of Testbench Skeleton}
-Check the provided testbench skeleton in \verb|lab3/lab3.srcs/sources_1/new/tone_generator_testbench.v| to see the test written for the \verb|tone_generator|. Let's go through what every line of this testbench does.
+Check the provided testbench skeleton in \verb|sim/tone_generator_testbench.v|.
+Let's go through what every line of this testbench does.
 
 \begin{minted}{verilog}
 `timescale 1ns/1ns
@@ -284,6 +277,69 @@ This piece of code is written in a separate \verb|initial begin ... end| block. 
 This block of code uses two system functions \verb|$fopen() and $fwrite()|, that allow us to write to a file. The \verb|forever begin| construct tells the simulator to run the chunk of code inside it continuously until the simulation ends.
 
 In the \verb|forever begin| block, we sample the \verb|square_wave_out| output of the \verb|tone_generator| and save it in a file. We sample this value every \verb|`SAMPLE_PERIOD| nanoseconds which corresponds to a 44.1 kHz sampling rate. Your \verb|tone_generator|'s output is stored as 1s and 0s in a text file that can be converted to an audio file to hear how your circuit will sound when deployed on the FPGA.
+
+\section{Top-Level Wiring and Tone Generator on the FPGA}
+
+Then open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.
+Connect \verb|square_wave_out| to \verb|aud_pwm|.
+Set \verb|aud_sd| to 1, to enable the audio output.
+
+Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
+Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
+Ask a TA if you need help here.
+
+Program the FPGA by running \texttt{make program}.
+Plug in headphones and make sure you hear a buzzing noise at 220Hz; compare the tone with a \href{https://www.szynalski.com/tone-generator/}{reference generator}.
+To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
+
+%Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
+
+%Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
+
+\section{Enhancements}
+\subsection{Switching the Wave On and Off}
+Now you have a tone, but it can't be toggled on and off without pulling the power to the FPGA board. Let's use the \verb|output_enable| input of the \verb|tone_generator| module to gate the square wave output. When \verb|output_enable| is 0, you should pass 0 to the \verb|square_wave_out| output, but when \verb|output_enable| is 1, you should pass your square wave to \verb|square_wave_out|.
+
+Wire up the \verb|output_enable| signal to the first slide switch (\verb|SWITCHES[0]|) in \verb|z1top|.
+
+Run your design flow. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board through the hardware manager. You should now hear a buzzing noise at 220Hz that can be turned on or off by toggling the first slide switch.
+
+You should verify that the tone is indeed 220 Hz by comparing it to a reference tone here: \url{http://onlinetonegenerator.com/}.
+
+\subsection{Volume Adjustment}
+
+\subsection{Design a Configurable Frequency tone\_generator}
+
+Let's extend our \verb|tone_generator| so that it can play different notes. You may start by adding a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|. Note you will also have to modify your \verb|clock_counter| to be 24 bits wide.
+
+The \verb|tone_switch_period| describes how often the square wave output switches from high to low or low to high. For example a \verb|tone_switch_period| of 284091 (0 d.p.) tells us to invert the square wave output every 142045 clock cycles, which for a 125 Mhz clock translates to a $\sim 440$ Hz square wave. Here is the derivation:
+
+\begin{eqnarray}
+  \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
+  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber
+\end{eqnarray}
+
+You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
+
+You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
+
+\subsubsection{Try the Configurable Frequency tone\_generator on the FPGA}
+Modify the top-level Verilog module \verb|z1top.v| to include the new input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|SWITCHES[0]| and \verb|BUTTONS[3:0]|, left-shifted by 9 bits (effectively a multiplication by 512). This will allow you to control the \verb|tone_switch_period| from 512 to 15872. Leave \verb|SWITCHES[1]| to control \verb|output_enable| initially; later, you can use it as an extra bit's worth of input. Here is a code snippet (incomplete):
+
+\begin{minted}[tabsize=4]{verilog}
+    tone_generator audio_controller (
+        .output_enable(SWITCHES[1]),
+        .tone_switch_period({18'd0, SWITCHES[0], BUTTONS[3:0]} << 9),
+    );
+\end{minted}
+
+What other way(s) do you have to digitally mute your output signal?
+
+Is the width of the bus assigned to \verb|tone_switch_period| correct? Does it matter?
+
+Run the usual synthesis, implementation and programming flow to put your new \verb|tone_generator| on the FPGA. Verify that toggling the switches and buttons changes the frequency of your \verb|tone_generator|.
+
+\section{Simulating the tone\_generator from Lab 2}
 
 \subsection{A Choice of Simulators}
 
