@@ -8,7 +8,7 @@ module tone_generator_testbench();
     reg clock;
     reg output_enable;
     reg [23:0] tone_to_play;
- 
+
     wire sq_wave;
 
     initial clock = 0;
@@ -44,7 +44,7 @@ module tone_generator_testbench();
 
         output_enable = 1'b0;
         #(100 * `MS);
-        
+
         $finish();
     end
 
