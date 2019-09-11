@@ -1,39 +1,36 @@
-ABS_TOP          		:= $(subst /cygdrive/c/,C:/, $(shell pwd))
-VIVADO           		?= vivado
-VIVADO_OPTS      		?= -nolog -nojournal -mode batch
-FPGA_PART        		?= xc7z020clg400-3
-RTL		 				+= $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.v"))
-CONSTRAINTS				+= $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.xdc"))
-TOP              		?= z1top
-#$(error $(WINDOWS_CONSTRAINTS))
+ABS_TOP                 := $(subst /cygdrive/c/,C:/, $(shell pwd))
+VIVADO                  ?= vivado
+VIVADO_OPTS             ?= -nolog -nojournal -mode batch
+FPGA_PART               ?= xc7z020clg400-3
+RTL                     += $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.v"))
+CONSTRAINTS             += $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.xdc"))
+TOP                     ?= z1top
 
-build:
-	@mkdir -p build
-
-build/target.tcl: $(RTL) $(CONSTRAINTS) build
-	@echo "set ABS_TOP                        $(ABS_TOP)"    >> $@
-	@echo "set TOP                            $(TOP)"    >> $@
-	@echo "set FPGA_PART                      $(FPGA_PART)"  >> $@
-	@echo "set_param general.maxThreads       4"    >> $@
-	@echo "set_param general.maxBackupLogs    0"    >> $@
-	@echo -n "set RTL { " >> $@
-	@FLIST="$(RTL)"; for f in $$FLIST; do echo -n "$$f " ; done >> $@
-	@echo "}" >> $@
-	@echo -n "set CONSTRAINTS { " >> $@
-	@FLIST="$(CONSTRAINTS)"; for f in $$FLIST; do echo -n "$$f " ; done >> $@
-	@echo "}" >> $@
+build/target.tcl: $(RTL) $(CONSTRAINTS)
+	mkdir -p build
+	echo "set ABS_TOP                        $(ABS_TOP)"    >> $@
+	echo "set TOP                            $(TOP)"    >> $@
+	echo "set FPGA_PART                      $(FPGA_PART)"  >> $@
+	echo "set_param general.maxThreads       4"    >> $@
+	echo "set_param general.maxBackupLogs    0"    >> $@
+	echo -n "set RTL { " >> $@
+	FLIST="$(RTL)"; for f in $$FLIST; do echo -n "$$f " ; done >> $@
+	echo "}" >> $@
+	echo -n "set CONSTRAINTS { " >> $@
+	FLIST="$(CONSTRAINTS)"; for f in $$FLIST; do echo -n "$$f " ; done >> $@
+	echo "}" >> $@
 
 setup: build/target.tcl
 
 build/synth/$(TOP).dcp: build/target.tcl $(ABS_TOP)/scripts/synth.tcl
 	mkdir -p ./build/synth/
-	cd ./build/synth/ && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/synth.tcl | tee synth.log
+	cd ./build/synth/ && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/synth.tcl 2>&1 | tee synth.log || (exit 1)
 
 synth: build/synth/$(TOP).dcp
 
 build/impl/$(TOP).bit: build/synth/$(TOP).dcp $(ABS_TOP)/scripts/impl.tcl
 	mkdir -p ./build/impl/
-	cd ./build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/impl.tcl | tee impl.log
+	cd ./build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/impl.tcl 2>&1 | tee impl.log || (exit 1)
 
 impl: build/impl/$(TOP).bit
 all: build/impl/$(TOP).bit
