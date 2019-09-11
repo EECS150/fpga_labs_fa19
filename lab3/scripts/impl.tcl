@@ -1,6 +1,6 @@
-source ../../target.tcl
+source ../target.tcl
 
-open_checkpoint ${ABS_TOP}/build/synth/latest/${TOP}.dcp
+open_checkpoint ${ABS_TOP}/build/synth/${TOP}.dcp
 
 if {[string trim ${CONSTRAINTS}] ne ""} {
   read_xdc ${CONSTRAINTS}

@@ -1,11 +1,11 @@
-ABS_TOP          := $(shell pwd)
-BUILD_SUFFIX     := $(shell date +%Y-%m-%d_%H-%M)
-VIVADO           ?= /opt/Xilinx/Vivado/2019.1/bin/vivado
-VIVADO_OPTS      ?= -nolog -nojournal -mode batch
-FPGA_PART        ?= xc7z020clg400-3
-RTL              += $(shell find $(ABS_TOP)/src -type f -name "*.v")
-CONSTRAINTS      += $(shell find $(ABS_TOP)/src -type f -name "*.xdc")
-TOP              ?= z1top
+ABS_TOP          		:= $(subst /cygdrive/c/,C:/, $(shell pwd))
+VIVADO           		?= vivado
+VIVADO_OPTS      		?= -nolog -nojournal -mode batch
+FPGA_PART        		?= xc7z020clg400-3
+RTL		 				+= $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.v"))
+CONSTRAINTS				+= $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.xdc"))
+TOP              		?= z1top
+#$(error $(WINDOWS_CONSTRAINTS))
 
 build:
 	@mkdir -p build
@@ -25,25 +25,21 @@ build/target.tcl: $(RTL) $(CONSTRAINTS) build
 
 setup: build/target.tcl
 
-build/synth/latest/$(TOP).dcp: build/target.tcl $(ABS_TOP)/scripts/synth.tcl
-	mkdir -p ./build/synth/$(BUILD_SUFFIX)
-	ln -sfn $(BUILD_SUFFIX) ./build/synth/working
-	cd ./build/synth/$(BUILD_SUFFIX) && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/synth.tcl | tee synth.log
-	ln -sfn $(BUILD_SUFFIX) ./build/synth/latest
+build/synth/$(TOP).dcp: build/target.tcl $(ABS_TOP)/scripts/synth.tcl
+	mkdir -p ./build/synth/
+	cd ./build/synth/ && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/synth.tcl | tee synth.log
 
-synth: build/synth/latest/$(TOP).dcp
+synth: build/synth/$(TOP).dcp
 
-build/impl/latest/$(TOP).bit: build/synth/latest/$(TOP).dcp $(ABS_TOP)/scripts/impl.tcl
-	mkdir -p ./build/impl/$(BUILD_SUFFIX)
-	ln -sfn $(BUILD_SUFFIX) ./build/impl/working
-	cd ./build/impl/$(BUILD_SUFFIX) && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/impl.tcl | tee impl.log
-	ln -sfn $(BUILD_SUFFIX) ./build/impl/latest
+build/impl/$(TOP).bit: build/synth/$(TOP).dcp $(ABS_TOP)/scripts/impl.tcl
+	mkdir -p ./build/impl/
+	cd ./build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/impl.tcl | tee impl.log
 
-impl: build/impl/latest/$(TOP).bit
-all: build/impl/latest/$(TOP).bit
+impl: build/impl/$(TOP).bit
+all: build/impl/$(TOP).bit
 
-program: build/impl/latest/$(TOP).bit $(ABS_TOP)/scripts/program.tcl
-	cd build/impl/latest && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/program.tcl
+program: build/impl/$(TOP).bit $(ABS_TOP)/scripts/program.tcl
+	cd build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/program.tcl
 
 vivado: build
 	cd build && nohup $(VIVADO) </dev/null >/dev/null 2>&1 &
