@@ -24,13 +24,13 @@ setup: build/target.tcl
 
 build/synth/$(TOP).dcp: build/target.tcl $(ABS_TOP)/scripts/synth.tcl
 	mkdir -p ./build/synth/
-	cd ./build/synth/ && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/synth.tcl 2>&1 | tee synth.log || (exit 1)
+	cd ./build/synth/ && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/synth.tcl |& tee synth.log
 
 synth: build/synth/$(TOP).dcp
 
 build/impl/$(TOP).bit: build/synth/$(TOP).dcp $(ABS_TOP)/scripts/impl.tcl
 	mkdir -p ./build/impl/
-	cd ./build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/impl.tcl 2>&1 | tee impl.log || (exit 1)
+	cd ./build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/impl.tcl |& tee impl.log
 
 impl: build/impl/$(TOP).bit
 all: build/impl/$(TOP).bit
