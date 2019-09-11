@@ -10,71 +10,125 @@
 \usepackage{minted}
 \usepackage{parskip}
 \usepackage{amsmath}
+\usepackage[listings]{tcolorbox}
+\usepackage{enumerate}
 \let\verbatiminput=\verbatimtabinput
 \def\verbatimtabsize{4\relax}
 
 \newcommand{\RepoRootPath}{fpga\_labs\_fa19}
 
+\tcbset{
+texexp/.style={colframe=black, colback=lightgray!15,
+         coltitle=white,
+         fonttitle=\small\sffamily\bfseries, fontupper=\small, fontlower=\small},
+     example/.style 2 args={texexp,
+title={Question \thetcbcounter: #1},label={#2}},
+}
+
+\newtcolorbox{texexp}[1]{texexp}
+\newtcolorbox[auto counter]{texexptitled}[3][]{%
+example={#2}{#3},#1}
+
+
 \begin{document}
 \title{EECS 151/251A FPGA Lab\\
-Lab 3: Simulation, Connecting Modules, and Memories}
+Lab 3: Tone Generator, Simulation, Connecting Modules, and Memories}
 
-\author{Prof. John Wawrzynek \\
-TAs: Christopher Yarp, Arya Reais-Parsi \\Department of Electrical Engineering and Computer Sciences\\
+\author{Prof. Borivoje Nikolic and Prof. Sophia Shao \\
+TAs: Cem Yalcin, Rebekah Zhao, Ryan Kaveh, Vighnesh Iyer \\ Department of Electrical Engineering and Computer Sciences\\
 College of Engineering, University of California, Berkeley}
 \date{}
 \maketitle
-
-\tableofcontents
 
 \section{Before You Start This Lab}
 
 Before you proceed with the contents of this lab, we suggest that you look through these two documents that will help you better understand some Verilog constructs.
 
 \begin{enumerate}
-  \item \textbf{\RepoRootPath/resources/Verilog/wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
-  \item \textbf{\RepoRootPath/resources/Verilog/always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
+  \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/wire_vs_reg.pdf}{wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
+  \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/always_at_blocks.pdf}{always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
   %\item \textbf{\RepoRootPath/resources/Verilog/verilog\_fsm.pdf} - An overview of how to create finite state machines in Verilog, specifying their state transitions and machine outputs.
 \end{enumerate}
 
-The first couple sections of this lab focus on simulation and it would be valuable to read these documents before starting.
+%The first couple sections of this lab focus on simulation and it would be valuable to read these documents before starting.
 
-\subsection{Helpful Hint: Synthesis Warnings and Errors}
-At various times in this lab, things will just not work on the FPGA or in simulation. To help with debugging, you can run the Synthesis step in your project from within Vivado. Have a look at the Synthesis messages that are generated as result. You can view them from the \emph{Project Summary} window or from within the \emph{Synthesized Design} window. Also remember that you can view all toolchain messages by selecting \emph{Window} $\rightarrow$ \emph{Messages}. Any synthesis warnings you see here could reveal a possible issue in your circuit. If you don't understand a warning, ask a TA.
+%\subsection{Helpful Hint: Synthesis Warnings and Errors}
+%At various times in this lab, things will just not work on the FPGA or in simulation. To help with debugging, you can run the Synthesis step in your project from within Vivado. Have a look at the Synthesis messages that are generated as result. You can view them from the \emph{Project Summary} window or from within the \emph{Synthesized Design} window. Also remember that you can view all toolchain messages by selecting \emph{Window} $\rightarrow$ \emph{Messages}. Any synthesis warnings you see here could reveal a possible issue in your circuit. If you don't understand a warning, ask a TA.
 
 \section{Designing a Tone Generator}
-Now it's time to try something new. Let's create a tone generator/buzzer on the FPGA.
+Let's create a tone generator/buzzer on the FPGA.
 
-Please take a look at \verb|pynq-rm.pdf| in the \texttt{\RepoRootPath/resources} folder.
-Read about the clock sources available on the board on page 14.
-Clock signals are generated outside the FPGA by a crystal oscillator or a programmable clock generator IC.
-These clock signals are then connected to pin(s) on the FPGA so that they can be used in your Verilog design.
+\subsection{Clock Sources}
+Look at the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual}.
+Read Section 11 about the clock sources available on the Pynq.
+We are using the 125 MHz clock from the Ethernet PHY IC on the Pynq board connected to pin H12 of the FPGA chip.
+%Clock signals are generated outside the FPGA by a crystal oscillator or a programmable clock generator IC.
+%These clock signals are then connected to pin(s) on the FPGA so that they can be used in your Verilog design.
 
-Take a look at the \verb|z1top.v| module and notice the \verb|CLK_125MHZ_FPGA| input. Next take a look at the XDC \verb|PYNQ-Z1_C.xdc| and notice how the LOC for the clock net is set to H16, just as specified in the Pynq-Z1 Reference Manual. Are any other clocks available? The 125 MHz clock signal we will use is actually generated by the Ethernet chip as a cost-saving manoeuvre: it actually gets disabled when the Ethernet chip is reset. We can access the signal from within our Verilog top-level module and can propagate this clock signal to any submodules that may need it.
+Look at the \texttt{src/z1top.v} top-level module and its \verb|CLK_125MHZ_FPGA| input.
+\begin{minted}{verilog}
+module z1top (
+    input CLK_125MHZ_FPGA,
+    ...
+);
+\end{minted}
+Next take a look at the constraints in \texttt{src/PYNQ-Z1\_C.xdc} and notice how the LOC for the clock net is set to H16, just as specified in the Pynq-Z1 Reference Manual.
+\begin{minted}{tcl}
+set_property -dict { PACKAGE_PIN H16 IOSTANDARD LVCMOS33 } [get_ports { CLK_125MHZ_FPGA }];
+\end{minted}
+This is how we map top-level signals in Verilog to the physical FPGA pins they are connected to.
+We can access the clock signal from our Verilog top-level module and can propagate this clock signal to any submodules that may need it.
+%Are any other clocks available? The 125 MHz clock signal we will use is actually generated by the Ethernet chip as a cost-saving manoeuvre: it actually gets disabled when the Ethernet chip is reset.
 
 \subsection{Audio Out}
+Look at Section 14 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual} which describes the mono audio out feature on the Pynq board.
 
-As described in the Pynq Reference Manual, our evaluation boards have several other neat peripherals (and even a few expansion ports). One feature is mono (single-channel) audio out: take a look at page 18. A Sallen-Key Butterworth low-pass filter is used at the output of another standard logic interface to the FPGA. This filter ``smooths out'' a pulse-width-modulated (PWM) signal to generated sinusoidal signals for driving a (low-power) external speaker. To learn more about how PWM will help generate an output waveform, read on to page 19. Aside: why is it a low-pass filter? What is the frequency response of the filter and why is it chosen as such?
+The FPGA pin R18 is connected to the \verb|AUD_PWN| net.
+The FPGA can drive this net with a PWM signal which goes through a low-pass filter and is driven into the audio jack on the Pynq board.
 
-\subsection{Enabling the Audio Out signal in the constraints file}
+There's also an \verb|AUD_SD| net connected to FPGA pin T17, which turns off the opamps in the low-pass filter.
 
-The description of Audio Out in the Reference Manual tells us which are the relevant pins on the FPGA. Let's add the Audio Out connection to the XDC constraints file. Uncomment lines 63 and 64 of \verb|PYNQ-Z1_C.xdc|, which is the master XDC file we will be using throughout the semester. These lines specify that the two relevant signals (\verb|aud_pwm| and \verb|aud_sd|) are connected to pins R18 and T17, respectively. Additionally, add the two signals to the top-level module \verb|z1top.v| so that they can be used in the design. (Should these be inputs or outputs?)
+Find these signals in the \texttt{src/PYNQ-Z1\_C.xdc} file, and note how they appear in the \texttt{src/z1top.v} port list.
+%As described in the Pynq Reference Manual, our evaluation boards have several other neat peripherals (and even a few expansion ports). One feature is mono (single-channel) audio out: take a look at page 18. A Sallen-Key Butterworth low-pass filter is used at the output of another standard logic interface to the FPGA. This filter ``smooths out'' a pulse-width-modulated (PWM) signal to generated sinusoidal signals for driving a (low-power) external speaker. To learn more about how PWM will help generate an output waveform, read on to page 19. Aside: why is it a low-pass filter? What is the frequency response of the filter and why is it chosen as such?
 
-Ask a TA if you need help for this part.
+%\subsection{Enabling the Audio Out signal in the constraints file}
+
+%The description of Audio Out in the Reference Manual tells us which are the relevant pins on the FPGA. Let's add the Audio Out connection to the XDC constraints file. Uncomment lines 63 and 64 of \verb|PYNQ-Z1_C.xdc|, which is the master XDC file we will be using throughout the semester. These lines specify that the two relevant signals (\verb|aud_pwm| and \verb|aud_sd|) are connected to pins R18 and T17, respectively. Additionally, add the two signals to the top-level module \verb|z1top.v| so that they can be used in the design. (Should these be inputs or outputs?)
+
+%Ask a TA if you need help for this part.
 
 \subsection{Generating a Square Wave}
-Let's say we want to play a 220 Hz square wave out of the Mono Audio Out port on our board. We want our square wave to have a 50\% duty cycle, so for half of the period of one wave the signal should be high and for the other half, the signal should be low. We have a 125 MHz clock input we can use to time our circuit.
+Let's play a 220 Hz square wave out of the Mono Audio Out port on the Pynq.
+The square wave should have a 50\% duty cycle, so for half of the period of one wave the signal should be high and for the other half, the signal should be low.
+We have a 125 MHz clock we can use to time our circuit.
 
 Find the following:
-\begin{enumerate}
-  \item The period of our clock signal (frequency = 125 MHz)?
-  \item The period of a 220 Hz square wave?
-  \item How many clock cycles does it take for one period of the square wave?
+\begin{texexptitled}{Square Wave Calculations}{}
+\begin{enumerate}[a)]
+\item The period of our clock signal (frequency = 125 MHz)?
+\item The period of a 220 Hz square wave?
+\item How many clock cycles fit in one period of the square wave?
 \end{enumerate}
+\end{texexptitled}
 
-Knowing how many clock cycles equals one cycle of the square wave, you can design this circuit. First open \verb|tone_generator.v|. Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
+Open \verb|src/tone_generator.v| and design a circuit to output a 220Hz square wave on the \verb|square_wave_out| output.
+Ignore the \verb|tone_switch_period| and \verb|output_enable| inputs for now.
 
-Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
+Then open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.
+Connect \verb|square_wave_out| to \verb|aud_pwm|.
+Set \verb|aud_sd| to 1, to enable the audio output.
+
+Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
+Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
+Ask a TA if you need help here.
+
+Program the FPGA by running \texttt{make program}.
+Plug in headphones and make sure you hear a buzzing noise at 220Hz; compare the tone with a \href{https://www.szynalski.com/tone-generator/}{reference generator}.
+To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
+
+%Some starter code is included in this file. Begin by sizing your \verb|clock_counter| register to the number of bits it would take to store the clock cycles per square wave period. Design the logic such that a 220 Hz square wave comes out of the \verb|square_wave_out| output. Instantiate the \verb|tone_generator| inside \verb|z1top.v| and connect it to the Audio Out pin we defined previously. Make sure that you enable the Audio Out with the \verb|aid_sd| signal as well.
+
+%Build your design. Check for any warnings or errors and try to fix them. Ask a TA if you need help here. When everything looks good, program the board. If everything works, you should be able to plug your audio-out signal into a speaker in the lab (or your own earphones) to hear a buzzing noise at 220 Hz. To stop the buzzing, just turn your FPGA off.
 
 \subsection{Switching the Wave On and Off}
 Now you have a tone, but it can't be toggled on and off without pulling the power to the FPGA board. Let's use the \verb|output_enable| input of the \verb|tone_generator| module to gate the square wave output. When \verb|output_enable| is 0, you should pass 0 to the \verb|square_wave_out| output, but when \verb|output_enable| is 1, you should pass your square wave to \verb|square_wave_out|.
