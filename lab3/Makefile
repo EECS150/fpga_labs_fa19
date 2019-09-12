@@ -75,3 +75,4 @@ clean:
 	rm -rf sim/ucli.key sim/*.vpd sim/*.vcd
 
 .PHONY: setup synth impl program vivado all clean %.tb
+.PRECIOUS: sim/%.tb sim/%.tbi
