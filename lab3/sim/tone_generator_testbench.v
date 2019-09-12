@@ -7,6 +7,7 @@
 module tone_generator_testbench();
     reg clock;
     reg output_enable;
+    reg volume = 0;
     reg [23:0] tone_to_play;
 
     wire sq_wave;
@@ -18,6 +19,7 @@ module tone_generator_testbench();
         .clk(clock),
         .output_enable(output_enable),
         .tone_switch_period(tone_to_play),
+        .volume(volume),
         .square_wave_out(sq_wave)
     );
 
@@ -29,7 +31,7 @@ module tone_generator_testbench();
 
         tone_to_play = 24'd37500;
         #(200 * `MS);
-
+        /*
         tone_to_play = 24'd42000;
         #(200 * `MS);
 
@@ -44,7 +46,7 @@ module tone_generator_testbench();
 
         output_enable = 1'b0;
         #(100 * `MS);
-
+        */
         $finish();
     end
 

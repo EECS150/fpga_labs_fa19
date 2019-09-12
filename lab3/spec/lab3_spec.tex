@@ -358,52 +358,53 @@ You can run XSIM on your laptop.
 \subsubsection{iverilog}
 \textbf{TODO} how to install on linux/osx/windows, how to run tests
 
-Let's go over the basics of ModelSim. The boxed screens are:
-
 \subsection{Analyzing the Simulation}
-You should be able to see the clock oscillate at the frequency specified in the testbench.
+After opening the waveform, you should be able to see the clock oscillate at the frequency specified in the testbench.
 You should also see the \verb|output_enable| signal start at 0 and then become 1 after 10 ms.
 However, you may see that the \verb|sq_wave| signal is just a red line. What's going on?
 
-\subsubsection{Fixing the Undefined clock\_counter}
+\subsubsection{Fixing Unknown Signals}
 Blue lines (written as `Z' in Verilog) in a waveform viewer indicate high-impedance (unconnected) signals.
 We won't be using high-impedance signals in our designs, so blue lines or `Z' indicate something in our testbench or DUT isn't wired up properly.
 
-If you have a red line for your \verb|clock_counter| at the start of your simulation, it may be because the initial value sitting inside the \verb|clock_counter| register is unknown. It could be anything! Since we don't have an explicit reset signal for our circuit to bring the \verb|clock_counter| to a defined value, it may be unknown for the entire simulation.
+Red lines (written as `X' in Verilog) in a waveform viewer indicate unknown signals.
+At the start of simulation, all registers in your DUT contain unknown values (represented as `x').
+Since we don't have an explicit reset signal for our circuit to bring the \verb|clock_counter| to a defined value, it may be unknown for the entire simulation.
 
-Let's fix this. In the future we will use a reset signal, but for now let's use a simpler technique. In \verb|lab2/src/tone_generator.v| modify this line as such:
-
+Let's fix this. In the future we will use a reset signal, but for now let's use a simpler technique. In \verb|src/tone_generator.v| add an initial value to any registers in your design.
 \begin{minted}{verilog}
 // Original code:
-reg [x:0] clock_counter;
+reg [x:0] counter;
 
 // Change to:
-reg [x:0] clock_counter = 0;
+reg [x:0] counter = 0;
 \end{minted}
 
-This tells the simulator that the initial value for this register should be 0. For this lab, when you add new registers in your \verb|tone_generator| or any other design module, you should instantiate them to their initial value in the same way. \textbf{Do not set an initial value for a 'wire' type net; it will cause issues with synthesis, and may cause X's in simulation.}
+This tells the simulator that the initial value for this register should be 0.
+For this lab, when you add new registers in your \verb|tone_generator| or any other design module, you should instantiate them with their initial value in the same way.
+\textbf{Do not set an initial value for a 'wire' type net; it will cause issues with synthesis, and may cause X's in simulation.}
 
 Now run the simulation again.
-
-\subsubsection{Helpful Tip: Reloading ModelSim .wlf}
-
-When you re-run your simulation and you want to plot the newly generated signals in ModelSim, you don't need to close and reopen ModelSim. Instead click on the 'Reload' button on the top toolbar which is to the right of the 'Save' button.
+\subsubsection{Helpful Tip: Reloading Waveforms}
+When you re-run your simulation and you want to plot the newly generated signals in DVE or gtkwave, you don't need to close and reopen the waveform viewer.
+Use \verb|Shift + Ctrl + R| in gtkwave or \verb|File| $\rightarrow$ \verb|Reload Databases| in DVE to reload the waveform file.
 
 \subsubsection{Listen to Your Square Wave Output}
-
-Take a look at the file written by the testbench located at \verb|lab3/sim/build/output.txt|. It should be a sequence of 1s and 0s that represent the output of your \verb|tone_generator| sampled at 44.1 kHz. Use a Python script that can take this file and generate a \verb|.wav| file that you can listen to.
+\textbf{TODO: patch the output file path}
+Look at the file written by the testbench at \verb|lab3/sim/build/output.txt|.
+It contains a sequence of 1s and 0s that represent the output of your \verb|tone_generator| sampled at 44.1 kHz.
+Use a Python script that can take this file and generate a \verb|.wav| file that you can listen to.
 
 Go to the \verb|lab3/| directory and run the command:
 
-\verb|python scripts/audio_from_sim.py sim/build/output.txt|
+\verb|python3 scripts/audio_from_sim.py sim/build/output.txt|
 
 This will generate a file called \verb|output.wav|. Run this command to play it:
 
 \verb|play output.wav|
 
 If \verb|play| doesn't work, try running \verb|aplay output.wav|.
-
-You should hear 5 tones, played rapidly one after the other that have descending frequencies.
+You should hear a 220Hz square wave. Compare it with a \href{https://www.szynalski.com/tone-generator/}{reference tone generator}.
 
 \subsubsection{Playing with the Testbench} \label{checkoff:0}
 
