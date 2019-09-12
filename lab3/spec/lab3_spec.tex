@@ -305,7 +305,17 @@ We sample this value every \verb|`SAMPLE_PERIOD| nanoseconds which corresponds t
 The \verb|tone_generator|'s output is stored as 1s and 0s in \verb|output.txt| that can be converted to an audio file to hear how your circuit will sound when deployed on the FPGA.
 
 \subsection{Running the Simulation}
-There are 3 RTL simulators we can use.
+There are 3 RTL simulators we can use:
+\begin{itemize}
+  \item \textbf{VCS} - proprietary, only available on lab machines, fastest
+  \item \textbf{XSIM} - free, bundled with Vivado, somewhat slower
+  \item \textbf{Icarus Verilog} - open source, runs on Windows/OSX/Linux, somewhat slower
+\end{itemize}
+They all take in Verilog RTL and a Verilog testbench module and output:
+\begin{itemize}
+  \item A waveform file (.vpd, .vcd) that plots each signal in the testbench and DUT across time
+  \item A text dump containing anything that was printed during the testbench execution
+\end{itemize}
 
 \subsubsection{VCS}
 If you're using the lab machines, you should use VCS:
@@ -318,70 +328,12 @@ Login to the lab machines physically or use X2go and run:
   dve sim/tone_generator_testbench.vpd &
 \end{minted}
 
-\subsubsection{XSIM}
-
-\subsubsection{iverilog}
-
-\subsection{A Choice of Simulators}
-
-As you've realised, the steps in the design and synthesis toolchain are independent programs with agreed interfaces for data flow. When it comes to simulating an HDL description of some design, several commercially available simulation tools exist. In this lab we will consider two:
-
-\begin{enumerate}
-  \item \textbf{Vivado Design Suite} has an integrated simulator, \textbf{xsim}, that can run your Verilog testbench directly. You will have seen in previous labs the \emph{Simulation} category in \emph{Flow Navigator} to the left of the Design Suite application window.
-  \item \textbf{ModelSim} is a third-party application by \href{https://www.mentor.com/products/fv/modelsim/}{Mentor Graphics}. It can also synthesise a simulation of a given Verilog testbench (and its dependent modules), but is a more powerful standalone product.
-\end{enumerate}
-
-Both simulators have a lot in common. They both allow you to view the waveforms of various signals in your design as a simulation, which you control, progresses. They're both driven by Tcl scripts (below), though you can also use a GUI to tweak their behaviour. Their GUIs have similar elements.
-
-To avoid using the Vivado ISE simulator past years' labs have relied on the external ModelSim application, which is also used by the ASIC labs. For our purposes, the newer Vivado Design Suite simulator is actually pretty good. It's also built-in to the free WebPACK version of Vivado, whereas ModelSim requires a second license - a pain if you want to run simulations locally, at home. We will still emphasise ModelSim, however to help give you experience in a sandbox environment. It'll be useful to get a feel for the Vivado integrated simulator too, as a back up should you ever need it. Understanding the features common to both or unique to one should make you more confident approaching unknown tools out in the wild.
-
-We provide a \verb|sim| directory in the \verb|lab3| folder to run the ModelSim simulation from. (Vivado can also be configured to launch ModelSim directly - you can try and set that up if you want.) The next sections will introduce you to ModelSim before comparing it to the Vivado integrated option.
-
-\subsection{ModelSim}
-\subsubsection{Using TCL scripts for ModelSim (.do files)}
-
-\textbf{ModelSim} takes commands from TCL scripts. Take a look at the \verb|lab3/sim/tests/tone_generator|\\\verb|_testbench.do| TCL script. Here is a quick description of what is instructs our simulator to do.
-
-\begin{minted}{tcl}
-start tone_generator_testbench
-add wave tone_generator_testbench/*
-add wave tone_generator_testbench/audio_controller/*
-run 10000ms
-\end{minted}
-
-We begin by issuing the \verb|start| command to the simulator. This instructs the simulator to scan a list of Verilog source files provided to it to find a module named \verb|tone_generator_testbench|. This module name must exactly match the module name of your top-level testbench module. The simulator loads and elaborates this module so that its ready to simulate/execute.
-
-The two \verb|add_wave| commands are important. By default, the simulator will not log the signals in our testbench or DUT as the simulation executes. The \verb|add wave tone_generator_testbench/*| line tells the simulator to log all signals directly inside in the \verb|tone_generator_testbench| module. The second line tells the simulator to log the signals in a submodule of the top-level testbench module. Observe that \verb|audio_controller| is the instance name of the \verb|tone_generator| instance in the testbench module.
-
-Finally, the \verb|run (time)| command tells the simulator to jump to the \verb|initial begin| blocks in the testbench and actually run the simulation. The time value (in our case 10000ms = 10s) gives the simulator an upper bound on the simulation time. The simulator will simulate for 10 seconds before timing out. If the simulator hits the \verb|$finish()| function before the 10 second timeout is up, it will stop simulation instantly.
-
-\subsubsection{Running ModelSim}
-
-With all the details out of the way, let's actually run a simulation. Go to the \verb|lab3/sim| directory and run \verb|make CASES=tests/tone_generator_testbench.do|. After a minute or so, the simulation will finish.
-
-\subsubsection{Viewing Waveforms}
-
-Let's take a look at the data that the simulator collected. Run the viewwave script like this:
-
-\verb|./viewwave results/tone_generator_testbench.wlf &|
-
-The results of the simulation and the logged signals are stored in a \verb|.wlf| file. This command should open that file in the ModelSim Wave Viewer.
-
-You should see a window like this:
-
-\begin{figure}[H]
-	\centerline{\includegraphics[width=\textwidth]{figs/modelsim_new.png}}
-\end{figure}
-
-Let's go over the basics of ModelSim. The boxed screens are:
-
+\textbf{TODO} insert a screenshot of dve and how to use it
 \begin{enumerate}
 	\item \textbf{Module Window} - List of the modules involved in the testbench. You can select one of these to have its signals show up in the object window.
 	\item \textbf{Object Window} - List of all the wires and regs in the selected module. You can add signals to the waveform view by selecting them, right-clicking, and doing \verb|Add Wave|.
 	\item \textbf{Waveform Viewer} - The signals that you add from the object window show up here. You can navigate the waves by searching for specific values or going forward or backward one transition at a time. The x-axis represents time.
 \end{enumerate}
-
-You may not see the \textbf{Waveform Viewer} when you first open ModelSim. To add signals to view, right click on the signal in the \textbf{Object Window}, and click on \verb|Add Wave|. Add the \verb|clock, output_enable,| and \verb|sq_wave| signals to the waveform viewer.
 
 Here are a few useful shortcuts:
 
@@ -395,13 +347,27 @@ Here are a few useful shortcuts:
 	\item \textbf{Middle Click + Drag to Top Right}: Zoom out from current waveform section
 \end{itemize}
 
-You should play with these shortcuts for a few minutes. Now, zoom to fit the entire waveform in your viewer.
+\subsubsection{XSIM}
+Vivado has an integrated simulator, \textbf{xsim}, that can run your Verilog testbench.
+You can run XSIM on your laptop.
 
-You should be able to see the clock oscillate at the frequency specified in the testbench. You should also see the \verb|output_enable| signal start at 0 and then become 1 after 10 ms. However, you may see that the \verb|sq_wave| signal is just a red line. What's going on?
+\textbf{TODO} open waveforms with dve or gtkwave
+
+\textbf{TODO} add vivado bin to PATH, how to run tests, how to view waves with gtkwave
+
+\subsubsection{iverilog}
+\textbf{TODO} how to install on linux/osx/windows, how to run tests
+
+Let's go over the basics of ModelSim. The boxed screens are:
+
+\subsection{Analyzing the Simulation}
+You should be able to see the clock oscillate at the frequency specified in the testbench.
+You should also see the \verb|output_enable| signal start at 0 and then become 1 after 10 ms.
+However, you may see that the \verb|sq_wave| signal is just a red line. What's going on?
 
 \subsubsection{Fixing the Undefined clock\_counter}
-
-Blue lines in ModelSim indicate high-impedance (unconnected) signals. High-impedance is specified in Verilog as the letter \verb|z|. We won't be using high-impedance signals in our designs, so blue lines in ModelSim indicate something in our testbench isn't wired up properly.
+Blue lines (written as `Z' in Verilog) in a waveform viewer indicate high-impedance (unconnected) signals.
+We won't be using high-impedance signals in our designs, so blue lines or `Z' indicate something in our testbench or DUT isn't wired up properly.
 
 If you have a red line for your \verb|clock_counter| at the start of your simulation, it may be because the initial value sitting inside the \verb|clock_counter| register is unknown. It could be anything! Since we don't have an explicit reset signal for our circuit to bring the \verb|clock_counter| to a defined value, it may be unknown for the entire simulation.
 
