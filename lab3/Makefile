@@ -17,7 +17,7 @@ sim/%.tb: sim/%.v $(RTL)
 	cd sim && $(VCS) $(VCS_OPTS) -o $*.tb $(RTL) $*.v -top $*
 
 sim/%.vpd: sim/%.tb
-	cd sim && $*.tb +verbose=1 +vpdfile+$*.vpd
+	cd sim && ./$*.tb +verbose=1 +vpdfile+$*.vpd
 
 sim/%.tbi: sim/%.v $(RTL)
 	cd sim && $(IVERILOG) $(IVERILOG_OPTS) -o $*.tbi $*.v $(RTL)
