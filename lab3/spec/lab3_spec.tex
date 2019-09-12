@@ -472,6 +472,15 @@ To fix this, when the square wave is high, do not emit a continuous 1 on the \ve
   \item \verb|volume = 0| $\rightarrow$ duty cycle = 25\% when square wave is high
 \end{itemize}
 
+An example of the PWM technique is shown in Figure \ref{fig:pwm}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figs/pwm.pdf}
+  \caption{Example of using PWM to drive a 50\% duty cycle wave when the square wave is high}
+  \label{fig:pwm}
+\end{figure}
+
 \begin{texexptitled}{Verify Volume Adjustment}{}
   \begin{enumerate}[a)]
     \item Modify the system-level testbench to iterate through both \verb|volume| settings. What changes were made?
@@ -569,16 +578,13 @@ We'll cover installing them for each OS.
 In a terminal you should be able to successfully run \verb|vivado|, \verb|iverilog|, \verb|gtkwave|.
 
 \subsubsection{Sharing Pynq USB Device from OSX to Linux VM}
+\textbf{TODO add screenshots}
+
 \subsection{Windows}
-\textbf{TODO} add vivado bin to PATH, how to run tests, how to view waves with gtkwave
-
-Installing Icarus locally on OSX or Linux is as easy as:
-\begin{minted}{bash}
-  apt install iverilog
-  brew install icarus-verilog
-\end{minted}
-
 Windows packages for \href{http://bleyer.org/icarus/}{Icarus are available}.
+Windows install of \href{https://sourceforge.net/projects/gtkwave/files/gtkwave-3.3.100-bin-win64/gtkwave-3.3.100-bin-win64.zip/download}{gtkwave}.
+Add the Vivado install folder bin, gtkwave and Icarus to the Windows PATH.
+Install Cygwin.
 
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:
