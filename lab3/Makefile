@@ -6,6 +6,15 @@ FPGA_PART               ?= xc7z020clg400-3
 RTL                     += $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.v"))
 CONSTRAINTS             += $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/src -type f -name "*.xdc"))
 TOP                     ?= z1top
+VCS                     := vcs -full64
+VCS_OPTS                := -notice -PP -line +lint=all,noVCDE +v2k -timescale=1ns/10ps -debug
+SIM_RTL                 := $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/sim -type f -name "*.v"))
+
+sim/%.tb: sim/%.v $(RTL)
+	cd sim && $(VCS) $(VCS_OPTS) -o $*.tb $(RTL) $*.v -top $*
+
+sim/%.vpd: sim/%.tb
+	cd sim && $*.tb +verbose=1 +vpdfile+$*.vpd
 
 build/target.tcl: $(RTL) $(CONSTRAINTS)
 	mkdir -p build
@@ -42,6 +51,9 @@ program: build/impl/$(TOP).bit $(ABS_TOP)/scripts/program.tcl
 vivado: build
 	cd build && nohup $(VIVADO) </dev/null >/dev/null 2>&1 &
 
+lint:
+	verilator --lint-only --top-module $(TOP) $(RTL)
+
 sim_build/compile_simlib/synopsys_sim.setup:
 	mkdir -p sim_build/compile_simlib
 	cd build/sim_build/compile_simlib && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/compile_simlib.tcl
@@ -49,6 +61,8 @@ sim_build/compile_simlib/synopsys_sim.setup:
 compile_simlib: sim_build/compile_simlib/synopsys_sim.setup
 
 clean:
-	rm -rf ./build
+	rm -rf ./build $(junk) *.daidir output.txt
+	rm -rf sim/*.tb sim/*.daidir sim/csrc
+	rm -rf sim/ucli.key sim/*.vpd
 
-.PHONY: setup synth impl program vivado all clean
+.PHONY: setup synth impl program vivado all clean %.tb
