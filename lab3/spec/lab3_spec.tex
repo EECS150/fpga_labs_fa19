@@ -93,8 +93,6 @@ example={#2}{#3},#1}
 \newcommand{\instbit}[1]{\mbox{\scriptsize #1}}
 \newcommand{\instbitrange}[2]{\instbit{#1} \hfill \instbit{#2}}
 
-
-
 \begin{document}
 
 \def\PYZsq{\textquotesingle}
@@ -106,19 +104,20 @@ College of Engineering, University of California, Berkeley}
 \date{}
 \maketitle
 
-
 \newcommand{\headertext}{EECS 151/251A FPGA Lab 3: Simulation and Sequential Circuits}
 \markboth{\headertext}{\headertext}
 \thispagestyle{empty}
 
 \section{Before You Start This Lab}
-
 Before you proceed with the contents of this lab, we suggest that you look through these two documents that will help you better understand some Verilog constructs.
 
 \begin{enumerate}
   \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/wire_vs_reg.pdf}{wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
   \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/always_at_blocks.pdf}{always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
 \end{enumerate}
+
+\subsection{Running the Lab on Your Laptop}
+If you want to run the tools for this lab locally, refer to the appendix.
 
 \section{Designing a Tone Generator}
 Let's create a tone generator/buzzer on the FPGA.
@@ -307,7 +306,7 @@ The \verb|tone_generator|'s output is stored as 1s and 0s in \verb|output.txt| t
 \subsection{Running the Simulation}
 There are 2 RTL simulators we can use:
 \begin{itemize}
-  \item \textbf{VCS} - proprietary, only available on lab machines, fastest
+  \item \textbf{VCS} - proprietary, only available on lab machines, fast
   %\item \textbf{XSIM} - free, bundled with Vivado, somewhat slower
   \item \textbf{Icarus Verilog} - open source, runs on Windows/OSX/Linux, somewhat slower
 \end{itemize}
@@ -360,11 +359,12 @@ Here are a few useful shortcuts:
 %\subsubsection{XSIM}
 %Vivado has an integrated simulator, \textbf{xsim}, that can run your Verilog testbench.
 %You can run XSIM on your laptop.
-\subsubsection{iverilog}
-\textbf{TODO} how to install on linux/osx/windows, how to run tests
-\textbf{TODO} open waveforms with dve or gtkwave
+\subsubsection{Icarus Verilog}
+Icarus Verilog is available on the lab machines.
+To install Icarus and gtkwave locally, refer to the appendix.
 
-\textbf{TODO} add vivado bin to PATH, how to run tests, how to view waves with gtkwave
+Run \verb|make sim/tone_generator_testbench.vcd| to launch a simulation with Icarus and to produce a vcd waveform file.
+You can open the VCD with DVE as in the previous section, or use gtkwave locally.
 
 \subsection{Analyzing the Simulation}
 After opening the waveform, you should be able to see the clock oscillate at the frequency specified in the testbench.
@@ -382,10 +382,10 @@ Since we don't have an explicit reset signal for our circuit to bring the \verb|
 Let's fix this. In the future we will use a reset signal, but for now let's use a simpler technique. In \verb|src/tone_generator.v| add an initial value to any registers in your design.
 \begin{minted}{verilog}
 // Original code:
-reg [x:0] counter;
+reg counter;
 
 // Change to:
-reg [x:0] counter = 0;
+reg counter = 0;
 \end{minted}
 
 This tells the simulator that the initial value for this register should be 0.
@@ -539,6 +539,39 @@ In any lab session, show the TA the following:
 \end{enumerate}
 
 Submit a lab report with answers and screenshots for the questions in this lab to Gradescope.
+
+\appendix
+\section{Local Dev Setup}
+We aim for the labs to be do-able using your laptop connected to a Pynq board.
+Refer to the Lab 2 spec's appendix to install Vivado locally.
+
+The other dependencies for this lab are \verb|make|, \verb|iverilog|, and \verb|gtkwave|.
+We'll cover installing them for each OS.
+
+\subsection{Linux/OSX}
+\begin{enumerate}
+  \item Add vivado to your \verb|$PATH| by adding this in your \verb|.bashrc|:
+
+    \verb|export PATH="/opt/Xilinx/Vivado/2019.1/bin:$PATH"|
+  \item Install gtkwave and Icarus Verilog
+    \begin{itemize}
+      \item Linux: \verb|sudo apt install gtkwave iverilog|
+      \item OSX: \verb|brew tap homebrew/cask|
+	\verb|brew cask install gtkwave|
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Windows}
+
+\textbf{TODO} add vivado bin to PATH, how to run tests, how to view waves with gtkwave
+
+Installing Icarus locally on OSX or Linux is as easy as:
+\begin{minted}{bash}
+  apt install iverilog
+  brew install icarus-verilog
+\end{minted}
+
+Windows packages for \href{http://bleyer.org/icarus/}{Icarus are available}.
 
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:
