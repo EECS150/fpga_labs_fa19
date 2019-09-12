@@ -9,12 +9,21 @@ TOP                     ?= z1top
 VCS                     := vcs -full64
 VCS_OPTS                := -notice -PP -line +lint=all,noVCDE +v2k -timescale=1ns/10ps -debug
 SIM_RTL                 := $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/sim -type f -name "*.v"))
+IVERILOG                := iverilog
+IVERILOG_OPTS           := -D IVERILOG=1
+VVP                     := VVP
 
 sim/%.tb: sim/%.v $(RTL)
 	cd sim && $(VCS) $(VCS_OPTS) -o $*.tb $(RTL) $*.v -top $*
 
 sim/%.vpd: sim/%.tb
 	cd sim && $*.tb +verbose=1 +vpdfile+$*.vpd
+
+sim/%.tbi: sim/%.v $(RTL)
+	cd sim && $(IVERILOG) $(IVERILOG_OPTS) -o $*.tbi $*.v $(RTL)
+
+sim/%.vvp: sim/%.tbi
+	cd sim && $(VVP) $*.tbi
 
 build/target.tcl: $(RTL) $(CONSTRAINTS)
 	mkdir -p build
@@ -63,6 +72,6 @@ compile_simlib: sim_build/compile_simlib/synopsys_sim.setup
 clean:
 	rm -rf ./build $(junk) *.daidir output.txt
 	rm -rf sim/*.tb sim/*.daidir sim/csrc
-	rm -rf sim/ucli.key sim/*.vpd
+	rm -rf sim/ucli.key sim/*.vpd sim/*.vcd
 
 .PHONY: setup synth impl program vivado all clean %.tb
