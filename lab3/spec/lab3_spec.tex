@@ -305,10 +305,10 @@ We sample this value every \verb|`SAMPLE_PERIOD| nanoseconds which corresponds t
 The \verb|tone_generator|'s output is stored as 1s and 0s in \verb|output.txt| that can be converted to an audio file to hear how your circuit will sound when deployed on the FPGA.
 
 \subsection{Running the Simulation}
-There are 3 RTL simulators we can use:
+There are 2 RTL simulators we can use:
 \begin{itemize}
   \item \textbf{VCS} - proprietary, only available on lab machines, fastest
-  \item \textbf{XSIM} - free, bundled with Vivado, somewhat slower
+  %\item \textbf{XSIM} - free, bundled with Vivado, somewhat slower
   \item \textbf{Icarus Verilog} - open source, runs on Windows/OSX/Linux, somewhat slower
 \end{itemize}
 They all take in Verilog RTL and a Verilog testbench module and output:
@@ -328,35 +328,43 @@ Login to the lab machines physically or use X2go and run:
   dve sim/tone_generator_testbench.vpd &
 \end{minted}
 
-\textbf{TODO} insert a screenshot of dve and how to use it
-\begin{enumerate}
-  \item \textbf{Module Window} - List of the modules involved in the testbench. You can select one of these to have its signals show up in the object window.
-  \item \textbf{Object Window} - List of all the wires and regs in the selected module. You can add signals to the waveform view by selecting them, right-clicking, and doing \verb|Add Wave|.
-  \item \textbf{Waveform Viewer} - The signals that you add from the object window show up here. You can navigate the waves by searching for specific values or going forward or backward one transition at a time. The x-axis represents time.
-\end{enumerate}
+The DVE interface contains 3 panels (Figure \ref{fig:dve}).
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{figs/dve.png}
+  \caption{DVE Interface}
+  \label{fig:dve}
+\end{figure}
+
+From left to right, you can see the `Hierarchy', `Signals', and `Source Code' windows.
+The `Hierarchy' window lets you select a particular module instance in the testbench to view its signals.
+In the `Signals' window, you can select multiple signals (by Shift-clicking) and then right-click $\rightarrow$ `Add To Waves' $\rightarrow$ `New Wave View' to plot the waveforms for the selected signals.
+
+The waveform viewer is shown in Figure \ref{fig:dve_wave}.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{figs/dve_wave.png}
+  \caption{DVE Waveform Viewer}
+  \label{fig:dve_wave}
+\end{figure}
 
 Here are a few useful shortcuts:
-
 \begin{itemize}
   \item \textbf{Click on waveform}: Sets cursor position
   \item \textbf{O}: Zoom out of waveform
-  \item \textbf{I}: Zoom into waveform
+  \item \textbf{+}: Zoom into waveform
   \item \textbf{F}: Fit entire waveform into viewer (zoom full)
-  \item \textbf{C}: Zoom in on cursor position
-  \item \textbf{Middle Click + Drag Left/Right}: Zoom in on waveform section
-  \item \textbf{Middle Click + Drag to Top Right}: Zoom out from current waveform section
+  \item \textbf{Left Click + Drag Left/Right}: Zoom in on waveform section
 \end{itemize}
 
-\subsubsection{XSIM}
-Vivado has an integrated simulator, \textbf{xsim}, that can run your Verilog testbench.
-You can run XSIM on your laptop.
-
+%\subsubsection{XSIM}
+%Vivado has an integrated simulator, \textbf{xsim}, that can run your Verilog testbench.
+%You can run XSIM on your laptop.
+\subsubsection{iverilog}
+\textbf{TODO} how to install on linux/osx/windows, how to run tests
 \textbf{TODO} open waveforms with dve or gtkwave
 
 \textbf{TODO} add vivado bin to PATH, how to run tests, how to view waves with gtkwave
-
-\subsubsection{iverilog}
-\textbf{TODO} how to install on linux/osx/windows, how to run tests
 
 \subsection{Analyzing the Simulation}
 After opening the waveform, you should be able to see the clock oscillate at the frequency specified in the testbench.
@@ -390,14 +398,13 @@ When you re-run your simulation and you want to plot the newly generated signals
 Use \verb|Shift + Ctrl + R| in gtkwave or \verb|File| $\rightarrow$ \verb|Reload Databases| in DVE to reload the waveform file.
 
 \subsubsection{Listen to Your Square Wave Output}
-\textbf{TODO: patch the output file path}
-Look at the file written by the testbench at \verb|lab3/sim/build/output.txt|.
+Look at the file written by the testbench at \verb|lab3/sim/output.txt|.
 It contains a sequence of 1s and 0s that represent the output of your \verb|tone_generator| sampled at 44.1 kHz.
 Use a Python script that can take this file and generate a \verb|.wav| file that you can listen to.
 
 Go to the \verb|lab3/| directory and run the command:
 
-\verb|python3 scripts/audio_from_sim.py sim/build/output.txt|
+\verb|python3 scripts/audio_from_sim.py sim/output.txt|
 
 This will generate a file called \verb|output.wav|. Run this command to play it:
 
@@ -423,12 +430,10 @@ Inside \verb|lab3| you can run the following:
   \item \verb|make vivado| - Launch the Vivado GUI
 \end{itemize}
 
-You should start with \verb|make synth|, check the log in \texttt{build/synth/synth.log}
-Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
-Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
-Ask a TA if you need help here.
-
+You should start with \verb|make synth|, and check the log in \texttt{build/synth/synth.log} for any warnings or errors.
+Then build a bitstream by running \verb|make impl|.
 Program the FPGA by running \texttt{make program}.
+
 \textit{Warning:} the audio output will be loud, don't put your headphones near your ear.
 Plug in headphones and make sure you hear a buzzing noise at 220Hz.
 Again, compare the tone to a \href{https://www.szynalski.com/tone-generator/}{reference tone generator}.
