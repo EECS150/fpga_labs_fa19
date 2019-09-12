@@ -42,6 +42,9 @@ program: build/impl/$(TOP).bit $(ABS_TOP)/scripts/program.tcl
 vivado: build
 	cd build && nohup $(VIVADO) </dev/null >/dev/null 2>&1 &
 
+lint:
+	verilator --lint-only --top-module $(TOP) $(RTL)
+
 sim_build/compile_simlib/synopsys_sim.setup:
 	mkdir -p sim_build/compile_simlib
 	cd build/sim_build/compile_simlib && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/compile_simlib.tcl
