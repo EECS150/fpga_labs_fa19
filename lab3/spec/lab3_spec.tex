@@ -553,16 +553,23 @@ We'll cover installing them for each OS.
   \item Add vivado to your \verb|$PATH| by adding this in your \verb|.bashrc|:
 
     \verb|export PATH="/opt/Xilinx/Vivado/2019.1/bin:$PATH"|
-  \item Install gtkwave and Icarus Verilog
+  \item Install Icarus Verilog
     \begin{itemize}
-      \item Linux: \verb|sudo apt install gtkwave iverilog|
-      \item OSX: \verb|brew tap homebrew/cask|
-	\verb|brew cask install gtkwave|
+      \item Linux: \verb|sudo apt install iverilog|
+      \item OSX: \verb|brew install icarus-verilog|
+    \end{itemize}
+
+  \item Install gtkwave
+    \begin{itemize}
+      \item Linux: \verb|sudo apt install gtkwave|
+      \item OSX: \href{https://sourceforge.net/projects/gtkwave/files/gtkwave-3.3.100-osx-app/gtkwave.zip/download}{Download the app}
     \end{itemize}
 \end{enumerate}
 
-\subsection{Windows}
+In a terminal you should be able to successfully run \verb|vivado|, \verb|iverilog|, \verb|gtkwave|.
 
+\subsubsection{Sharing Pynq USB Device from OSX to Linux VM}
+\subsection{Windows}
 \textbf{TODO} add vivado bin to PATH, how to run tests, how to view waves with gtkwave
 
 Installing Icarus locally on OSX or Linux is as easy as:
