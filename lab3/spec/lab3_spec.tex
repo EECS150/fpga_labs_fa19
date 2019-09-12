@@ -487,11 +487,12 @@ Let's extend our \verb|tone_generator| so that it can play different notes.
 There is a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|.
 
 The \verb|tone_switch_period| describes how many cycles of the \verb|clk| should pass before the square wave output is toggled.
-For example a \verb|tone_switch_period| of 284091 (0 d.p.) tells us to invert the square wave output every 142045 clock cycles, which for a 125 Mhz clock translates to a $\sim 440$ Hz square wave. Here is the derivation:
+For example a \verb|tone_switch_period| of 150000 tells us to invert the square wave output every 150000 clock cycles, which for a 125 Mhz clock translates to a $\sim 417$ Hz square wave. Here is the derivation:
 
 \begin{eqnarray}
   \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
-  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber
+  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber \\
+  \frac{2 \cdot 150000 \text{ cycles}}{1 \text{second}}
 \end{eqnarray}
 
 You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
