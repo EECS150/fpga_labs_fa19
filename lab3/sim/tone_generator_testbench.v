@@ -26,7 +26,7 @@ module tone_generator_testbench();
 
     initial begin
         `ifdef IVERILOG
-            $dumpfile("tone_generator_tb.vcd");
+            $dumpfile("tone_generator_testbench.vcd");
             $dumpvars(0,sq_wave);
         `endif
 

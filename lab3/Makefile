@@ -11,7 +11,7 @@ VCS_OPTS                := -notice -PP -line +lint=all,noVCDE +v2k -timescale=1n
 SIM_RTL                 := $(subst /cygdrive/c/,C:/, $(shell find $(ABS_TOP)/sim -type f -name "*.v"))
 IVERILOG                := iverilog
 IVERILOG_OPTS           := -D IVERILOG=1
-VVP                     := VVP
+VVP                     := vvp
 
 sim/%.tb: sim/%.v $(RTL)
 	cd sim && $(VCS) $(VCS_OPTS) -o $*.tb $(RTL) $*.v -top $*
@@ -22,7 +22,7 @@ sim/%.vpd: sim/%.tb
 sim/%.tbi: sim/%.v $(RTL)
 	cd sim && $(IVERILOG) $(IVERILOG_OPTS) -o $*.tbi $*.v $(RTL)
 
-sim/%.vvp: sim/%.tbi
+sim/%.vcd: sim/%.tbi
 	cd sim && $(VVP) $*.tbi
 
 build/target.tcl: $(RTL) $(CONSTRAINTS)

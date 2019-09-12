@@ -4,24 +4,28 @@
 `define MS 1000000
 `define SAMPLE_PERIOD 22675.7
 
-module music_streamer_testbench();
+module z1top_testbench();
     reg clock;
-    wire speaker;
-
     initial clock = 0;
     always #(4) clock <= ~clock;
 
+    wire aud_pwm, aud_sd, speaker;
+    wire [5:0] leds;
+    reg [3:0] buttons = 4'h0;
+    reg [1:0] switches = 2'b00;
+    assign speaker = aud_pwm & aud_sd;
+
     z1top top (
         .CLK_125MHZ_FPGA(clock),
-        .BUTTONS(4'hF),
-        .SWITCHES(2'b11),
-        .LEDS(),
-        .aud_pwm(speaker),
-        .aud_sd()
+        .BUTTONS(buttons),
+        .SWITCHES(switches),
+        .LEDS(leds),
+        .aud_pwm(aud_pwm),
+        .aud_sd(aud_sd)
     );
 
     initial begin
-        #(2 * `SECOND);
+        #(200 * `MS);
         $finish();
     end
 
