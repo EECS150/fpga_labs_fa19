@@ -509,8 +509,10 @@ Note we multiply the \verb|tone_switch_period| by 2 to get the actual period of 
 
 You should toggle the square wave output every \verb|tone_switch_period| cycles.
 Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
+You should also handle the case when \verb|tone_switch_period| is 0. In this case disable the tone output.
 
-You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
+Open \verb|src/tone_generator.v| and implement the functionality above.
+Extend the \verb|tone_generator_testbench| to play different tones and verify the tone generator works as expected.
 
 \begin{texexptitled}{Verify Configurable Frequency}{}
   \begin{enumerate}[a)]
