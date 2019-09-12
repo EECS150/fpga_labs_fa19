@@ -481,6 +481,8 @@ An example of the PWM technique is shown in Figure \ref{fig:pwm}.
   \label{fig:pwm}
 \end{figure}
 
+You can refer to section 14.1 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual} for help on PWM waveforms.
+
 \begin{texexptitled}{Verify Volume Adjustment}{}
   \begin{enumerate}[a)]
     \item Modify the system-level testbench to iterate through both \verb|volume| settings. What changes were made?
@@ -496,7 +498,7 @@ Let's extend our \verb|tone_generator| so that it can play different notes.
 There is a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_period|.
 
 The \verb|tone_switch_period| describes how many cycles of the \verb|clk| should pass before the square wave output is toggled.
-For example a \verb|tone_switch_period| of 150000 tells us to invert the square wave output every 150000 clock cycles, which for a 125 Mhz clock translates to a $\sim 417$ Hz square wave. Here is the derivation:
+For example a \verb|tone_switch_period| of 150000 tells us to toggle the square wave output every 150000 clock cycles, which for a 125 Mhz clock translates to a $\sim 417$ Hz square wave. Here is the derivation:
 
 \begin{align*}
   \frac{2 \cdot 150000 \text{ cycles}}{1 \text{ second}} &= \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{f \text{ cycles}}{1 \text{ second}} \\
@@ -505,7 +507,7 @@ For example a \verb|tone_switch_period| of 150000 tells us to invert the square 
 
 Note we multiply the \verb|tone_switch_period| by 2 to get the actual period of the square wave.
 
-You should invert the square wave output every \verb|tone_switch_period| cycles.
+You should toggle the square wave output every \verb|tone_switch_period| cycles.
 Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
 
 You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
