@@ -414,6 +414,16 @@ Set \verb|aud_sd| to 1 to enable the audio output.
 
 \subsection{Make-Based FPGA Flow}
 We're no longer using the Vivado GUI to run the FPGA flow, but a Makefile driven flow instead.
+Inside \verb|lab3| you can run the following:
+\begin{itemize}
+  \item \verb|make lint| - Lint your Verilog with Verilator; checks for common Verilog typos, mistakes, and syntax errors
+  \item \verb|make synth| - Synthesize \verb|z1top| and put logs and outputs in \verb|build/synth|
+  \item \verb|make impl| - Implement (place and route) the design, generate the bitstream, and put logs and outputs in \verb|build/impl|
+  \item \verb|make program| - Program the FPGA with the bitstream in \verb|build/impl|
+  \item \verb|make vivado| - Launch the Vivado GUI
+\end{itemize}
+
+You should start with \verb|make synth|, check the log in \texttt{build/synth/synth.log}
 Build a bitstream by running \texttt{make impl} in \texttt{\RepoRootPath/lab3}.
 Check for any warnings or errors in \texttt{build/synth/latest/synth.log} and try to fix them.
 Ask a TA if you need help here.
