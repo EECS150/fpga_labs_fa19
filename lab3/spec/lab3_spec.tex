@@ -489,43 +489,47 @@ There is a 24-bit input to the \verb|tone_generator| called \verb|tone_switch_pe
 The \verb|tone_switch_period| describes how many cycles of the \verb|clk| should pass before the square wave output is toggled.
 For example a \verb|tone_switch_period| of 150000 tells us to invert the square wave output every 150000 clock cycles, which for a 125 Mhz clock translates to a $\sim 417$ Hz square wave. Here is the derivation:
 
-\begin{eqnarray}
-  \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{440 \text{ periods}}{1 \text{ second}} = \frac{ 284091 \text{ cycles}}{1 \text{ period}} \nonumber \\
-  284091 \text{ cycles/period} \rightarrow 142045 \text{ cycles/half-period} \nonumber \\
-  \frac{2 \cdot 150000 \text{ cycles}}{1 \text{second}}
-\end{eqnarray}
+\begin{align*}
+  \frac{2 \cdot 150000 \text{ cycles}}{1 \text{ second}} &= \frac{125 \times 10^6 \text{ cycles}}{1 \text{ second}} \div \frac{f \text{ cycles}}{1 \text{ second}} \\
+  f &\approx 417 \text{ Hz}
+\end{align*}
 
-You may have to modify the architecture of your \verb|tone_generator| to accommodate this new input signal. You should reset the internal \verb|clock_counter| every \verb|tone_switch_period| cycles and should also invert the square wave output. Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
+Note we multiply the \verb|tone_switch_period| by 2 to get the actual period of the square wave.
+
+You should invert the square wave output every \verb|tone_switch_period| cycles.
+Remember to initialize any new registers declared in your \verb|tone_generator| to their desired initial value to prevent unknowns during simulation.
 
 You should also handle the case when \verb|tone_switch_period| is 0.  In this case disable the tone output.
 
 \begin{texexptitled}{Verify Configurable Frequency}{}
   \begin{enumerate}[a)]
-    \item Create a testbench that plays some simple melody that you define and have its audio output file ready for checkoff.
+    \item Create a testbench that plays some simple melody that you define. Save the audio file for checkoff.
     \item Verify that when \verb|tone_switch_period| is set to 0, the \verb|square_wave_out| output doesn't toggle. Attach a screenshot.
   \end{enumerate}
 \end{texexptitled}
 
 \subsubsection{Try the Configurable Frequency tone\_generator on the FPGA}
-Modify the top-level Verilog module \verb|z1top.v| to include the new input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|SWITCHES[0]| and \verb|BUTTONS[3:0]|, left-shifted by 9 bits (effectively a multiplication by 512). This will allow you to control the \verb|tone_switch_period| from 512 to 15872. Leave \verb|SWITCHES[1]| to control \verb|output_enable| initially; later, you can use it as an extra bit's worth of input. Here is a code snippet (incomplete):
+Modify \verb|z1top.v| to wire \verb|tone_switch_period| to \verb|BUTTONS[3:0]|
+input to the \verb|tone_generator|. You should tie the \verb|tone_switch_period| to \verb|BUTTONS[3:0]|, left-shifted by 16 bits (effectively a multiplication by 65536).
+This will allow you to control the \verb|tone_switch_period| from 65536 to 983040.
+Leave \verb|SWITCHES[0]| to control \verb|output_enable| and \verb|SWITCHES[1]| to control \verb|volume|.
 
 \begin{minted}[tabsize=4]{verilog}
     tone_generator audio_controller (
-        .output_enable(SWITCHES[1]),
-        .tone_switch_period({18'd0, SWITCHES[0], BUTTONS[3:0]} << 9),
+        .output_enable(SWITCHES[0]),
+        .volume(SWITCHES[1]),
+        .tone_switch_period(BUTTONS[3:0] << 16),
     );
 \end{minted}
 
-What other way(s) do you have to digitally mute your output signal?
-
-Is the width of the bus assigned to \verb|tone_switch_period| correct? Does it matter?
-
-Run the usual synthesis, implementation and programming flow to put your new \verb|tone_generator| on the FPGA. Verify that toggling the switches and buttons changes the frequency of your \verb|tone_generator|.
+Run the usual flow to put your new \verb|tone_generator| on the FPGA.
+Verify that pushing the buttons changes the frequency of your \verb|tone_generator|.
 
 \section{Checkoff}
 In any lab session, show the TA the following:
 \begin{enumerate}
   \item Show the RTL you used to create your tone generator
+  \item Play an audio file that demonstrates playing a melody using the tone generator
   \item Demonstrate your tone generator on the FPGA
     \begin{enumerate}
       \item Demonstrate muting the output with a switch
