@@ -109,7 +109,9 @@ College of Engineering, University of California, Berkeley}
 \thispagestyle{empty}
 
 \section{Before You Start This Lab}
-Before you proceed with the contents of this lab, we suggest that you look through these two documents that will help you better understand some Verilog constructs.
+Run \verb|git pull| in \verb|fpga_labs_fa19|.
+
+We suggest that you look through these two documents that will help you better understand some Verilog constructs.
 
 \begin{enumerate}
   \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/wire_vs_reg.pdf}{\color{blue}{wire\_vs\_reg.pdf}} - The differences between wire and reg nets and when to use each of them.
@@ -117,7 +119,7 @@ Before you proceed with the contents of this lab, we suggest that you look throu
 \end{enumerate}
 
 \subsection{Running the Lab on Your Laptop}
-If you want to run the tools for this lab locally, refer to the appendix.
+If you want to run the tools for this lab locally, refer to the appendix at the end of this spec for installation instructions.
 
 \section{Designing a Tone Generator}
 Let's create a tone generator/buzzer on the FPGA.
@@ -436,7 +438,7 @@ Program the FPGA by running \texttt{make program}.
 
 \textit{Warning:} the audio output will be loud, don't put your headphones near your ear.
 Plug in headphones and make sure you hear a buzzing noise at 220Hz.
-Again, compare the tone to a \href{https://www.szynalski.com/tone-generator/}\color{blue}{reference tone generator}.
+Again, compare the tone to a \href{https://www.szynalski.com/tone-generator/}{\color{blue}{reference tone generator}}.
 To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
 
 \section{Enhancements}
