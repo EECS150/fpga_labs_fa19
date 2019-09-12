@@ -28,7 +28,6 @@ for note in data:
         continue
     packed_value = struct.pack('<hh', value, value) # Pack both L and R channel into 2 bytes
     values.append(packed_value)
-print(values)
 
 output_wav = wave.open('output.wav', 'w')
 output_wav.setparams((2, 2, 44100, 0, 'NONE', 'not compressed'))

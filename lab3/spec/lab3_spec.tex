@@ -312,7 +312,7 @@ There are 2 RTL simulators we can use:
 \end{itemize}
 They all take in Verilog RTL and a Verilog testbench module and output:
 \begin{itemize}
-  \item A waveform file (.vpd, .vcd) that plots each signal in the testbench and DUT across time
+  \item A waveform file (.vpd, .vcd, .fst) that plots each signal in the testbench and DUT across time
   \item A text dump containing anything that was printed during the testbench execution
 \end{itemize}
 
@@ -324,7 +324,7 @@ If you're using the lab machines, you should use VCS:
 This will generate a waveform file \verb|sim/tone_generator_testbench.vpd| which you can view using \verb|dve|.
 Login to the lab machines physically or use X2go and run:
 \begin{minted}{bash}
-  dve sim/tone_generator_testbench.vpd &
+  dve -vpd sim/tone_generator_testbench.vpd &
 \end{minted}
 
 The DVE interface contains 3 panels (Figure \ref{fig:dve}).
@@ -363,8 +363,8 @@ Here are a few useful shortcuts:
 Icarus Verilog is available on the lab machines.
 To install Icarus and gtkwave locally, refer to the appendix.
 
-Run \verb|make sim/tone_generator_testbench.vcd| to launch a simulation with Icarus and to produce a vcd waveform file.
-You can open the VCD with DVE as in the previous section, or use gtkwave locally.
+Run \verb|make sim/tone_generator_testbench.fst| to launch a simulation with Icarus and to produce a FST waveform file.
+You can open the FST with gtkwave locally or on the lab machines.
 
 \subsection{Analyzing the Simulation}
 After opening the waveform, you should be able to see the clock oscillate at the frequency specified in the testbench.

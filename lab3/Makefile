@@ -22,8 +22,8 @@ sim/%.vpd: sim/%.tb
 sim/%.tbi: sim/%.v $(RTL)
 	cd sim && $(IVERILOG) $(IVERILOG_OPTS) -o $*.tbi $*.v $(RTL)
 
-sim/%.vcd: sim/%.tbi
-	cd sim && $(VVP) $*.tbi
+sim/%.fst: sim/%.tbi
+	cd sim && $(VVP) $*.tbi -fst
 
 build/target.tcl: $(RTL) $(CONSTRAINTS)
 	mkdir -p build

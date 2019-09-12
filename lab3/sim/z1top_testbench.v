@@ -25,6 +25,11 @@ module z1top_testbench();
     );
 
     initial begin
+        `ifdef IVERILOG
+            $dumpfile("z1top_testbench.fst");
+            $dumpvars(0,z1top_testbench);
+        `endif
+
         #(200 * `MS);
         $finish();
     end

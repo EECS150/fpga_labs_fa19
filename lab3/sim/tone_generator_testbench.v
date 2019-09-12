@@ -3,7 +3,6 @@
 `define SECOND 1000000000
 `define MS 1000000
 `define SAMPLE_PERIOD 22675.7
-`define IVERILOG 0
 
 module tone_generator_testbench();
     reg clock;
@@ -26,8 +25,8 @@ module tone_generator_testbench();
 
     initial begin
         `ifdef IVERILOG
-            $dumpfile("tone_generator_testbench.vcd");
-            $dumpvars(0,sq_wave);
+            $dumpfile("tone_generator_testbench.fst");
+            $dumpvars(0,tone_generator_testbench);
         `endif
 
         tone_to_play = 24'd0;
