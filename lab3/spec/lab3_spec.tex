@@ -112,8 +112,8 @@ College of Engineering, University of California, Berkeley}
 Before you proceed with the contents of this lab, we suggest that you look through these two documents that will help you better understand some Verilog constructs.
 
 \begin{enumerate}
-  \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/wire_vs_reg.pdf}{wire\_vs\_reg.pdf} - The differences between wire and reg nets and when to use each of them.
-  \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/always_at_blocks.pdf}{always\_at\_blocks.pdf} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
+  \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/wire_vs_reg.pdf}{\color{blue}{wire\_vs\_reg.pdf}} - The differences between wire and reg nets and when to use each of them.
+  \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/always_at_blocks.pdf}{\color{blue}{always\_at\_blocks.pdf}} - Understanding the differences between the two types of always @ blocks and what they synthesize to.
 \end{enumerate}
 
 \subsection{Running the Lab on Your Laptop}
@@ -123,7 +123,7 @@ If you want to run the tools for this lab locally, refer to the appendix.
 Let's create a tone generator/buzzer on the FPGA.
 
 \subsection{Clock Sources}
-Look at the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual}.
+Look at the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{\color{blue}{Pynq Reference Manual}}.
 Read Section 11 about the clock sources available on the Pynq.
 We are using the 125 MHz clock from the Ethernet PHY IC on the Pynq board connected to pin H12 of the FPGA chip.
 
@@ -143,7 +143,7 @@ This is how we map top-level signals in Verilog to the physical FPGA pins they a
 We can access the clock signal from our Verilog top-level module and can propagate this clock signal to any submodules that may need it.
 
 \subsection{Audio Out}
-Look at Section 14 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual} which describes the mono audio out feature on the Pynq board.
+Look at Section 14 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{\color{blue}{Pynq Reference Manual}} which describes the mono audio out feature on the Pynq board.
 
 The FPGA pin R18 is connected to the \verb|AUD_PWM| net.
 The FPGA can drive this net with a PWM signal which goes through a low-pass filter and is driven into the audio jack on the Pynq board.
@@ -411,7 +411,7 @@ This will generate a file called \verb|output.wav|. Run this command to play it:
 \verb|play output.wav|
 
 If \verb|play| doesn't work, try running \verb|aplay output.wav|.
-You should hear a 220Hz square wave. Compare it with a \href{https://www.szynalski.com/tone-generator/}{reference tone generator}.
+You should hear a 220Hz square wave. Compare it with a \href{https://www.szynalski.com/tone-generator/}{\color{blue}{reference tone generator}}.
 
 \section{Top-Level Wiring and Tone Generator on the FPGA}
 Open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.
@@ -436,7 +436,7 @@ Program the FPGA by running \texttt{make program}.
 
 \textit{Warning:} the audio output will be loud, don't put your headphones near your ear.
 Plug in headphones and make sure you hear a buzzing noise at 220Hz.
-Again, compare the tone to a \href{https://www.szynalski.com/tone-generator/}{reference tone generator}.
+Again, compare the tone to a \href{https://www.szynalski.com/tone-generator/}\color{blue}{reference tone generator}.
 To stop the buzzing, you can press the \verb|SRST| button on the top-right of the Pynq.
 
 \section{Enhancements}
@@ -481,7 +481,7 @@ An example of the PWM technique is shown in Figure \ref{fig:pwm}.
   \label{fig:pwm}
 \end{figure}
 
-You can refer to section 14.1 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{Pynq Reference Manual} for help on PWM waveforms.
+You can refer to section 14.1 of the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{\color{blue}{Pynq Reference Manual}} for help on PWM waveforms.
 
 \begin{texexptitled}{Verify Volume Adjustment}{}
   \begin{enumerate}[a)]
@@ -575,7 +575,7 @@ We'll cover installing them for each OS.
   \item Install gtkwave
     \begin{itemize}
       \item Linux: \verb|sudo apt install gtkwave|
-      \item OSX: \href{https://sourceforge.net/projects/gtkwave/files/gtkwave-3.3.100-osx-app/gtkwave.zip/download}{Download the app}
+      \item OSX: \href{https://sourceforge.net/projects/gtkwave/files/gtkwave-3.3.100-osx-app/gtkwave.zip/download}{\color{blue}{Download the app}}
     \end{itemize}
 \end{enumerate}
 
@@ -585,11 +585,46 @@ In a terminal you should be able to successfully run \verb|vivado|, \verb|iveril
 \textbf{TODO add screenshots}
 
 \subsection{Windows}
-Windows packages for \href{http://bleyer.org/icarus/}{Icarus are available}.
-Windows install of \href{https://sourceforge.net/projects/gtkwave/files/gtkwave-3.3.100-bin-win64/gtkwave-3.3.100-bin-win64.zip/download}{gtkwave}.
-Add the Vivado install folder bin, gtkwave and Icarus to the Windows PATH.
-Install Cygwin.
+Windows packages for \href{http://bleyer.org/icarus/}{\color{blue}{Icarus are available}}. You should be able to download the appropriate .exe for your machine. Gtkwave can be installed along with Icarus (just make sure you check the box for it). Lastly, here is a link to install \href{https://www.cygwin.com/install.html}{\color{blue}{Cygwin}}. When you install Cygwin, you need to check the boxes for make and git as shown in Fig. \ref{fig:cygwin}.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figs/cygwin_install.png}
+  \caption{Check make and git with your cygwin install!}
+  \label{fig:cygwin}
+\end{figure}
+
+After installing Icarus, gtkwave, and cygwin, you'll need add Vivado, Icarus, and gtkwave to your Windows PATH with the below steps.
+\begin{itemize}
+    \item Go the windows control panel and find the "Edit the system variables menu". Alternatively, if you just search for "system variables", the menu should pop up.
+    \item Click the "Environment Variables" button near the window's bottom right corner (Fig. \ref{fig:envVars1}).
+    \item Double click the "Path" variable in the user variables dialog  (Fig. \ref{fig:envVars2}).
+    \item Click the next empty row and paste the path of the appropriate program  (Fig. \ref{fig:envVars3}). Hit okay and you're done!
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}{0.5\textwidth}
+          \centering
+          \includegraphics[width=0.5\textwidth]{figs/environment_variables_1a.png}
+          \caption{The System variables dialogue.}
+          \label{fig:envVars1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.5\textwidth}
+          \centering
+          \includegraphics[width=0.5\textwidth]{figs/environment_variables_2a.png}
+          \caption{Environment variables dialogue.}
+          \label{fig:envVars2}
+	\end{minipage}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figs/environment_variables_3.png}
+  \caption{Adding programs to your PATH.}
+  \label{fig:envVars3}
+\end{figure}
+\newpage
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:
 \begin{itemize}
