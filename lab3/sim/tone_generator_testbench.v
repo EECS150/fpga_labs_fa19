@@ -57,11 +57,17 @@ module tone_generator_testbench();
 
     integer file;
     initial begin
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
         file = $fopen("output.txt", "w");
         forever begin
             $fwrite(file, "%h\n", sq_wave);
             #(`SAMPLE_PERIOD);
         end
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
     end
 
 endmodule
