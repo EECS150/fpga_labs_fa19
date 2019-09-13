@@ -36,11 +36,17 @@ module z1top_testbench();
 
     integer file;
     initial begin
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
         file = $fopen("output.txt", "w");
         forever begin
             $fwrite(file, "%h\n", speaker);
             #(`SAMPLE_PERIOD);
         end
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
     end
 
 endmodule
