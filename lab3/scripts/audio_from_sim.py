@@ -12,25 +12,16 @@ import random
 import struct
 import sys
 
-values = []
-
 filepath = sys.argv[1]
+values = []
 with open(filepath, 'r') as samples_file:
-    data = samples_file.read()
-
-for note in data:
-    value = 0
-    if (note == '0'):
-        value = -20000
-    elif (note == '1'):
-        value = 20000
-    else:
-        continue
-    packed_value = struct.pack('<hh', value, value) # Pack both L and R channel into 2 bytes
-    values.append(packed_value)
-
-output_wav = wave.open('output.wav', 'w')
-output_wav.setparams((2, 2, 44100, 0, 'NONE', 'not compressed'))
-output_wav.writeframes(b''.join(values))
-output_wav.close()
+    values = [int(line.rstrip('\n').strip()) for line in samples_file]
+    max_value = max(values)
+    scaled_values = [((val*40000) / max_value) + -20000 for val in values]
+    packed_values = [struct.pack('<h', int(val)) for val in scaled_values]
+    output_wav = wave.open('output.wav', 'w')
+    # nchannels (1 - mono), sampwidth (2 bytes per sample), framerate (50 kHz), nframes (0)
+    output_wav.setparams((1, 2, 50000, 0, 'NONE', 'not compressed'))
+    output_wav.writeframes(b''.join(packed_values))
+    output_wav.close()
 sys.exit(0)

@@ -414,6 +414,7 @@ This will generate a file called \verb|output.wav|. Run this command to play it:
 
 If \verb|play| doesn't work, try running \verb|aplay output.wav|.
 You should hear a 220Hz square wave. Compare it with a \href{https://www.szynalski.com/tone-generator/}{\color{blue}{reference tone generator}}.
+You can slow down the playback by 50\% with \verb|play output.wav tempo 0.5|, but it may cause minor glitches in the playback.
 
 \section{Top-Level Wiring and Tone Generator on the FPGA}
 Open \verb|src/z1top.v| and instantiate the \verb|tone_generator|.

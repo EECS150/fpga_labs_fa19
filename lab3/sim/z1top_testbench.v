@@ -2,7 +2,7 @@
 
 `define SECOND 1000000000
 `define MS 1000000
-`define SAMPLE_PERIOD 22675.7
+`define CLOCKS_PER_SAMPLE 2500 // 125 Mhz clock, 50 kHz audio, 2500 clocks per sample
 
 module z1top_testbench();
     reg clock;
@@ -35,14 +35,20 @@ module z1top_testbench();
     end
 
     integer file;
+    integer i;
+    integer count;
     initial begin
         `ifndef IVERILOG
             $vcdpluson;
         `endif
         file = $fopen("output.txt", "w");
         forever begin
-            $fwrite(file, "%h\n", speaker);
-            #(`SAMPLE_PERIOD);
+            count = 0;
+            for (i = 0; i < `CLOCKS_PER_SAMPLE; i = i + 1) begin
+                @(posedge clock);
+                count = count + speaker;
+            end
+            $fwrite(file, "%d\n", count);
         end
         `ifndef IVERILOG
             $vcdplusoff;
