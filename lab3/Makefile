@@ -57,6 +57,9 @@ all: build/impl/$(TOP).bit
 program: build/impl/$(TOP).bit $(ABS_TOP)/scripts/program.tcl
 	cd build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/program.tcl
 
+program-force:
+	cd build/impl && $(VIVADO) $(VIVADO_OPTS) -source $(ABS_TOP)/scripts/program.tcl
+
 vivado: build
 	cd build && nohup $(VIVADO) </dev/null >/dev/null 2>&1 &
 
@@ -74,5 +77,5 @@ clean:
 	rm -rf sim/*.tb sim/*.daidir sim/csrc
 	rm -rf sim/ucli.key sim/*.vpd sim/*.vcd
 
-.PHONY: setup synth impl program vivado all clean %.tb
+.PHONY: setup synth impl program program-force vivado all clean %.tb
 .PRECIOUS: sim/%.tb sim/%.tbi

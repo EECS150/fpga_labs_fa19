@@ -127,7 +127,7 @@ Let's create a tone generator/buzzer on the FPGA.
 \subsection{Clock Sources}
 Look at the \href{https://reference.digilentinc.com/reference/programmable-logic/pynq-z1/reference-manual}{\color{blue}{Pynq Reference Manual}}.
 Read Section 11 about the clock sources available on the Pynq.
-We are using the 125 MHz clock from the Ethernet PHY IC on the Pynq board connected to pin H12 of the FPGA chip.
+We are using the 125 MHz clock from the Ethernet PHY IC on the Pynq board connected to pin H16 of the FPGA chip.
 
 Look at the \texttt{src/z1top.v} top-level module and its \verb|CLK_125MHZ_FPGA| input.
 \begin{minted}{verilog}
@@ -371,7 +371,7 @@ You can open the FST with gtkwave locally or on the lab machines.
 \subsection{Analyzing the Simulation}
 After opening the waveform, you should be able to see the clock oscillate at the frequency specified in the testbench.
 You should also see the \verb|output_enable| signal start at 0 and then become 1 after 10 ms.
-However, you may see that the \verb|sq_wave| signal is just a red line. What's going on?
+However, you \textit{may} see that the \verb|sq_wave| signal is just a red line. What's going on?
 
 \subsubsection{Fixing Unknown Signals}
 Blue lines (written as `Z' in Verilog) in a waveform viewer indicate high-impedance (unconnected) signals.
@@ -429,6 +429,7 @@ Inside \verb|lab3| you can run the following:
   \item \verb|make synth| - Synthesize \verb|z1top| and put logs and outputs in \verb|build/synth|
   \item \verb|make impl| - Implement (place and route) the design, generate the bitstream, and put logs and outputs in \verb|build/impl|
   \item \verb|make program| - Program the FPGA with the bitstream in \verb|build/impl|
+  \item \verb|make program-force| - Program the FPGA with the bitstream in \verb|build/impl| \textit{without} re-running synthesis and implementation if the source Verilog has changed
   \item \verb|make vivado| - Launch the Vivado GUI
 \end{itemize}
 
@@ -534,6 +535,7 @@ Leave \verb|SWITCHES[0]| to control \verb|output_enable| and \verb|SWITCHES[1]| 
         .output_enable(SWITCHES[0]),
         .volume(SWITCHES[1]),
         .tone_switch_period(BUTTONS[3:0] << 16),
+        // ...
     );
 \end{minted}
 
@@ -605,19 +607,19 @@ After installing Icarus, gtkwave, and cygwin, you'll need add Vivado, Icarus, an
 \end{itemize}
 
 \begin{figure}[H]
-	\centering
-	\begin{minipage}{0.5\textwidth}
-          \centering
-          \includegraphics[width=0.5\textwidth]{figs/environment_variables_1a.png}
-          \caption{The System variables dialogue.}
-          \label{fig:envVars1}
-	\end{minipage}\hfill
-	\begin{minipage}{0.5\textwidth}
-          \centering
-          \includegraphics[width=0.5\textwidth]{figs/environment_variables_2a.png}
-          \caption{Environment variables dialogue.}
-          \label{fig:envVars2}
-	\end{minipage}
+  \centering
+  \begin{minipage}{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figs/environment_variables_1a.png}
+    \caption{The System variables dialogue.}
+    \label{fig:envVars1}
+  \end{minipage}\hfill
+  \begin{minipage}{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figs/environment_variables_2a.png}
+    \caption{Environment variables dialogue.}
+    \label{fig:envVars2}
+  \end{minipage}
 \end{figure}
 
 \begin{figure}[ht]
