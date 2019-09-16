@@ -73,9 +73,10 @@ sim_build/compile_simlib/synopsys_sim.setup:
 compile_simlib: sim_build/compile_simlib/synopsys_sim.setup
 
 clean:
-	rm -rf ./build $(junk) *.daidir output.txt
-	rm -rf sim/*.tb sim/*.daidir sim/csrc
-	rm -rf sim/ucli.key sim/*.vpd sim/*.vcd
+	rm -rf ./build $(junk) *.daidir sim/output.txt \
+	sim/*.tb sim/*.daidir sim/csrc \
+	sim/ucli.key sim/*.vpd sim/*.vcd \
+	sim/*.tbi sim/*.fst sim/*.jou sim/*.log sim/*.out
 
 .PHONY: setup synth impl program program-force vivado all clean %.tb
 .PRECIOUS: sim/%.tb sim/%.tbi
