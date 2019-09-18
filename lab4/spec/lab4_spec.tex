@@ -473,6 +473,9 @@ Modify the \verb|tone_generator| and \verb|music_streamer| to use the provided \
 
 Try rerunning the \verb|music_streamer_testbench|, which pulses the \verb|rst| signal, and verify using the waveform that there are no Xs.
 
+Finally connect \verb|buttons_pressed[0]| to the \verb|music_streamer| and \verb|tone_generator| \verb|rst| input in \verb|z1top.v|.
+Program the FPGA and verify the reset functionality.
+
 \section{Music Streamer Tempo Control}
 Let's use the new user inputs we now have access to.
 The \verb|music_streamer| plays each tone in the ROM for 1/25th of a second.
@@ -555,7 +558,7 @@ Finally, program the FPGA with the \verb|music_streamer|, and verify its functio
 \begin{enumerate}
   \item Show the RTL for the input conditioning circuits and music streamer
   \item Play an audio file generated from a simulation
-  \item Demonstrate the music streamer on the FPGA
+  \item Demonstrate the music streamer on the FPGA (FSM, tempo control, reset)
 \end{enumerate}
 
 \subsection{Lab Report}
