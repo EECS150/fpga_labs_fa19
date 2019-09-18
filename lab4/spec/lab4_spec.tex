@@ -116,7 +116,7 @@ Review these documents that will help you better understand some concepts we wil
   \item \href{http://inst.eecs.berkeley.edu/~eecs151/fa19/files/verilog/verilog_fsm.pdf}{verilog\_fsm.pdf} - constructing FSMs in Verilog.
   \item \href{http://www.labbookpages.co.uk/electronics/debounce.html}{Debouncer Circuit}
 
-  Read the ``What is Switch Bounce'' section to get idea of why we need a debouncer circuit. Read the ``Digital Switch Debouncing'' section to get a general overview of the circuit, its parts, and their functions.
+  Read the ``What is Switch Bounce'' section about why we need a debouncer circuit. Read the ``Digital Switch Debouncing'' section about the implementation of a debouncer circuit.
 \end{enumerate}
 
 \section{Lab Overview}
@@ -127,15 +127,20 @@ In this lab, we will
   \item verify the conditioning circuits are working correctly using the FPGA LEDs
   \item use synchronous resets to reset our circuits to a known initial state
   \item create a basic FSM in the \verb|music_streamer| that uses the buttons to change states and alter the music playback
-  \item (optionally) extend our \verb|music_streamer| into a sequencer.
 \end{itemize}
 
 \section{Using an Asynchronous ROM to Build the Music Streamer}
-An asynchronous memory is a memory block that isn't governed by a clock. In this lab, we will use a Python script to generate a ROM block in Verilog.
+An asynchronous memory is a memory block that isn't governed by a clock.
+In this lab, we will use a Python script to generate a Verilog ROM block.
 
-A ROM is a read-only memory. This data can be accessed by supplying an address to the ROM; after some time, the ROM will output the data stored at that address. A memory block in general can contain as many addresses in which to store data as you desire. Every address should contain the same amount of data (bits). The number of addresses is called the \textbf{depth} of the memory, while the number of bits stored per address is called the \textbf{width} of the memory.
+A ROM is a read-only memory.
+The ROM's data can be accessed by supplying an address; after some time, the ROM will output the data stored at that address.
+The number of addresses in a memory is called its \textbf{depth}, while the number of bits stored per address is called the \textbf{width} of the memory.
 
-The synthesizer takes the Verilog you write and converts it into a low-level netlist of the structures are actually used on the FPGA. Our Verilog \textbf{describes} the functionality of some digital circuit and the synthesizer \textbf{infers} what primitives implement the functional description. In this section, we will examine the Verilog that allows the synthesizer to infer a ROM. This is a minimal example of a ROM in Verilog: (depth of 8 entries/addresses, width of 12 bits)
+The synthesizer takes the Verilog you write and converts it into a low-level netlist which uses only the primitives available on the FPGA.
+Our Verilog \textbf{describes} the functionality of some digital circuit and the synthesizer \textbf{infers} what primitives implement the functional description.
+In this section, we will examine the Verilog that allows the synthesizer to infer a ROM.
+This is a minimal example of a ROM in Verilog: (depth of 8 entries/addresses, width of 12 bits)
 
 \begin{minted}[tabsize=2]{verilog}
 module rom (input [2:0] address, output reg [11:0] data);
@@ -154,7 +159,8 @@ module rom (input [2:0] address, output reg [11:0] data);
 endmodule
 \end{minted}
 
-To power our \verb|tone_generator|, we will be using a ROM that is X entries/addresses deep and 24 bits wide. The ROM will contain tones that the \verb|tone_generator| will play. You can choose the depth of your ROM based on the length of the sequence of tones you want to play.
+To power our \verb|tone_generator|, we will be using a ROM that is X entries/addresses deep and 24 bits wide.
+The ROM will contain tones that the \verb|tone_generator| will play. You can choose the depth of your ROM based on the length of the sequence of tones you want to play.
 
 We've provided you with a few scripts that can generate a ROM from either a file with it's contents or even from sheet music. Run these commands from \verb|lab3/|.
 
