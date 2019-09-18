@@ -20,6 +20,7 @@ module edge_detector_testbench();
         .edge_detect_pulse(edge_detect_pulse)
     );
 
+    reg done = 0;
     initial begin
         // Set initial state, wait for 1 clock cycle
         signal_in = 0;
@@ -62,6 +63,15 @@ module edge_detector_testbench();
                 @(posedge edge_detect_pulse);
                 @(posedge clk); #1;
                 if (edge_detect_pulse[0] !== 1'b0) $display("Failure 2: Your edge detector's output wasn't 1 clock cycle wide");
+                done = 1;
+            end
+
+            begin
+                repeat (1000) @(posedge clk);
+                if (!done) begin
+                    $display("Failure: Timing out after 1000 cycles");
+                    $finish();
+                end
             end
         join
         $display("Test Done! If any failures were printed, fix them! Otherwise this testbench passed.");

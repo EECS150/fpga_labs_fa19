@@ -20,7 +20,6 @@ module sync_testbench();
     );
 
     initial begin
-        $display("\n");
         // We use fork-join to create 2 threads that operate in parallel
         fork
             // This first thread will send a test signal into the DUT's async_signal input
