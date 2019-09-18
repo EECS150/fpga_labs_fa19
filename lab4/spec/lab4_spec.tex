@@ -405,7 +405,7 @@ endgenerate
 Implement the debouncer.
 
 \subsubsection{Debouncer Simulation}
-A testbench has been provided in \verb|sim/debouncer_testbench.v|. Run it as usual.
+A testbench has been provided in \verb|sim/debouncer_testbench.v|. Make sure you understand what the testbench is doing. Run it as usual.
 
 The debouncer testbench has 2 tests:
 \begin{enumerate}
@@ -434,50 +434,50 @@ A testbench is provided in \verb|edge_detector_testbench.v|. Run as usual.
 
 The edge detector testbench tests 2 scenarios, when the \verb|signal_in| is a pulse 10 clock cycles wide and a pulse 1 clock cycle wide and verifies that the \verb|edge_detect_pulse| output goes high twice, both times with a width of 1 clock cycle.
 
-\subsubsection{Testing on the FPGA}
-We have created a top level module called \verb|debouncer_fpga_test| that will create a 6-bit register and will use button presses to add and subtract from it. This module will use both your \verb|debouncer.v| and \verb|edge_detector.v|.
+\subsection{Input Conditioning Circuits on the FPGA}
+Look at \verb|src/button_parser.v| which combines the synchronizer, debouncer, and edge detector in a chain.
+A test of the \ttvar{button_parser} is in \verb|src/z1top.v| which contains a 4-bit \verb|count| register which is incremented/decremented by pressing buttons.
+The LEDs show the current value of \verb|count|.
 
-Pressing BTN1 or BTN2 will cause the register to incrment by 1. Pressing BTN0 will cause the register to decrement by 1. BTN3 resets the register to 0. The LEDs will show the current value of the register.
-
-In your Vivado project, set \verb|debouncer_fpga_test| as the top module and run the build flow, then program the board. Make sure that you \textbf{investigate any warnings for synthesis}. You can ignore some: the top-level module has unused input/output ports to avoid having to change the XDC file. Make sure you fix any other warnings you find so that the your debouncer will work as expected on the FPGA.
-
-You will discover when playing with your debouncer that the buttons have a way that they like being pressed to minimize bounce; get a good feel for them.
-
+Run \verb|make lint| and \verb|make program| and try the circuit on the FPGA.
+Make sure to check synthesis warnings in \verb|build/synth/synth.log|. Fix any that are unexpected.
+Check that each button performs the right action on the FPGA.
 
 \section{Synchronous Resets In Design and Simulation}
-Begin by copying your \verb|tone_generator| and \verb|music_streamer| from lab 3. \textbf{Do not change the port declaration of the lab 4 skeleton files, only copy over your implementation}.
-
-Now that we have a debouncer that can give us a pulse for a press of a button, we have a way of explicitly resetting our circuits! You will recall that in the previous lab, we set the initial value of registers as below so that our simulation would have defined signals.
+Now that we have a debouncer that can give us a pulse for a press of a button, we have a way of explicitly resetting our circuits!
+You will recall that in the previous lab, we set the initial value of registers as below so that our simulation would have defined signals.
 
 \begin{minted}[tabsize=4]{verilog}
-reg [23:0] clock_counter = 0;
+reg [23:0] counter = 0;
 \end{minted}
-
-or 
-
+or
 \begin{minted}[tabsize=4]{verilog}
-initial clock_counter = 0;
+initial counter = 0;
 \end{minted}
 
 Tying one of the push buttons to a reset signal, we can now do this instead.
 
 \begin{minted}[tabsize=4]{verilog}
 always @ (posedge clk) begin
-	if (rst) begin
-		clock_counter <= 24'd0;
-	end
-	else begin
-		clock_counter <= clock_counter + 24'd1;
-	end
+  if (rst) begin
+    counter <= 24'd0;
+  end
+  else begin
+    counter <= counter + 24'd1;
+  end
 end
 \end{minted}
 
-Unlike what we did before, this Verilog is synthesizable for all deployment targets, FPGAs, ASICs, and CPLDs alike. Go ahead and modify your \verb|tone_generator| and \verb|music_streamer| to use the provided \verb|RESET| signal to get your registers to a sensible initial state.
+Unlike what we did before, this Verilog is synthesizable for all deployment targets, FPGAs, ASICs, and CPLDs.
+Modify the \verb|tone_generator| and \verb|music_streamer| to use the provided \verb|rst| signal instead of initial assignemnts.
 
-After doing this, run the \verb|tone_generator_testbench| again using \verb|make| in the \verb|lab4/sim/| directory (or just use Vivado's simulator). View the waveform using the simulator and see how we used a reset in the testbench to bring all the registers to a defined state without specifying a default value.
+Try rerunning the \verb|music_streamer_testbench|, which pulses the \verb|rst| signal, and verify using the waveform that there are no Xs.
 
 \section{Music Streamer Tempo Control}
-Let's use the new user inputs we now have access to. You will recall that your \verb|music_streamer| by default chooses to play each tone in the ROM for 1/25th of a second. Extend the functionality of the \verb|music_streamer| so that one input increases the tempo, one input decreases it, and one resets it to a default value. If you have the hex keypad working, you can map any of the keys to these functions, but make a note of it. If not, use the push-buttons left on the Pynq-Z1 (remembering that BTN3 is now reserved as a global reset signal).
+Let's use the new user inputs we now have access to.
+The \verb|music_streamer| plays each tone in the ROM for 1/25th of a second.
+
+Extend the functionality of the \verb|music_streamer| so that one input increases the tempo, one input decreases it, and one resets it to a default value. If you have the hex keypad working, you can map any of the keys to these functions, but make a note of it. If not, use the push-buttons left on the Pynq-Z1 (remembering that BTN3 is now reserved as a global reset signal).
 
 You can implement this by using a register to hold the number of clock cycles per note. Instead of this number being hardcoded in Verilog to represent $\frac{1}{25}$th of a second, you can change it at runtime. One input should add or subtract a fixed number from this register, which should alter the time each tone is played. You get to choose this number; find something reasonable.
 
@@ -494,33 +494,29 @@ The FSM will have 3 states: \verb|PAUSED|, \verb|REGULAR_PLAY|, \verb|REVERSE_PL
   \tikzstyle{stateEdgePortion} = [black,thick];
   \tikzstyle{stateEdge} = [stateEdgePortion,->];
   \tikzstyle{edgeLabel} = [pos=0.5, text centered, font={\sffamily\small}];
-  
-	\node[state,initial](rp) {REGULAR\_PLAY};
-	\node[state](revp) [below =of rp]{REVERSE\_PLAY};
-	\node[state](p) [right=of rp]{PAUSED};
 
-	\path[->]
-	(rp) edge node {Play-pause button} (p)
-		edge [swap] node {Reverse button} (revp)
-		edge [loop above] node {} (rp)
-	(p) edge node {} (rp)
-		edge [loop below] node {} (p)
-	(revp) edge [swap] node {Play-pause button} (p)
-		edge [swap] node {} (rp)
-		edge [loop below] node {} (revp);
+  \node[state,initial](rp) {REGULAR\_PLAY};
+  \node[state](revp) [below =of rp]{REVERSE\_PLAY};
+  \node[state](p) [right=of rp]{PAUSED};
+
+  \path[->]
+  (rp) edge node {Play-pause button} (p)
+    edge [swap] node {Reverse button} (revp)
+    edge [loop above] node {} (rp)
+  (p) edge node {} (rp)
+    edge [loop below] node {} (p)
+  (revp) edge [swap] node {Play-pause button} (p)
+    edge [swap] node {} (rp)
+    edge [loop below] node {} (revp);
 \end{tikzpicture}
 \end{center}
 
 \begin{enumerate}
-	\item Your initial state should be \verb|REGULAR_PLAY|. 
-	
-	\item Pressing one button should transition you into the \verb|PAUSED| state from either the \verb|REGULAR_PLAY| or \verb|REVERSE_PLAY| states. Pressing the same button while in the \verb|PAUSED| state should transition the FSM to the \verb|REGULAR_PLAY| state.
-	
-	\item In the \verb|PAUSED| state, your ROM address should be held steady at its value before the transition into \verb|PAUSED| and no sound should come out of the speaker. After leaving the \verb|PAUSED| state your ROM address should begin incrementing again from where it left off and the speaker should play the tones.
-	
-	\item You can toggle between the \verb|REGULAR_PLAY| and \verb|REVERSE_PLAY| states by using a second input button. In the \verb|REVERSE_PLAY| state you should decrement your ROM address by 1 rather than incrementing it by 1 every X clock cycles as defined by your tempo.
-		
-	\item If you don't press any buttons, the FSM shouldn't transition to another state.
+  \item Your initial state should be \verb|REGULAR_PLAY|.
+  \item Pressing one button should transition you into the \verb|PAUSED| state from either the \verb|REGULAR_PLAY| or \verb|REVERSE_PLAY| states. Pressing the same button while in the \verb|PAUSED| state should transition the FSM to the \verb|REGULAR_PLAY| state.
+  \item In the \verb|PAUSED| state, your ROM address should be held steady at its value before the transition into \verb|PAUSED| and no sound should come out of the speaker. After leaving the \verb|PAUSED| state your ROM address should begin incrementing again from where it left off and the speaker should play the tones.
+  \item You can toggle between the \verb|REGULAR_PLAY| and \verb|REVERSE_PLAY| states by using a second input button. In the \verb|REVERSE_PLAY| state you should decrement your ROM address by 1 rather than incrementing it by 1 every X clock cycles as defined by your tempo.
+  \item If you don't press any buttons, the FSM shouldn't transition to another state.
 \end{enumerate}
 
 Your \verb|music_streamer| takes in user button inputs that it can use to transition states. If you have a working keypad you will have plenty of inputs to choose from, and you should select new inputs such that the tempo control from the previous section still works (again, remember to note your scheme). If not, you have to be creative: use an edge detector circuit with the slide switches to convert their actuation into a momentary signal (using the switch position as state would be too easy).
@@ -530,12 +526,12 @@ Also, drive the LEDs such that they show the current state. An example:
 \renewcommand{\arraystretch}{1.5}
 \begin{center}
 \begin{tabular}{| l | l |}
-	\hline
-	\textbf{LED} & \textbf{Value} \\ \hline
-        LEDS[5] & \verb|current_state| == \verb|REGULAR_PLAY| \\ \hline
-        LEDS[4] & \verb|current_state| == \verb|PAUSED| \\ \hline
-        LEDS[3] & \verb|current_state| == \verb|REVERSE_PLAY| \\ \hline
-        LEDS[2:0] & 0 \\ \hline
+  \hline
+  \textbf{LED} & \textbf{Value} \\ \hline
+      LEDS[5] & \verb|current_state| == \verb|REGULAR_PLAY| \\ \hline
+      LEDS[4] & \verb|current_state| == \verb|PAUSED| \\ \hline
+      LEDS[3] & \verb|current_state| == \verb|REVERSE_PLAY| \\ \hline
+      LEDS[2:0] & 0 \\ \hline
 \end{tabular}
 \end{center}
 
