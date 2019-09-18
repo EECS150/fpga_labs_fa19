@@ -319,7 +319,7 @@ When the button signals are put through a register, its hold or setup time may b
 This may put that register into a \textit{metastable} state (Figure \ref{fig:metastability}).
 
 \begin{figure}
-  \centerline{\includegraphics[height=3cm]{figs/lab2_fig3.png}}
+  \centerline{\includegraphics[height=3cm]{figs/metastability.png}}
   \caption{The `ball on a hill' metaphor for metastability. If a register's timing constraints are violated, its output voltage oscillates and after some time unpredictably settles to a stable state.}
   \label{fig:metastability}
 \end{figure}
@@ -336,53 +336,54 @@ For synchronizing one bit, it is a pair of flip-flops connected serially.
 
 \begin{figure}[H]
   \vspace{0.5cm}
-  \centerline{\includegraphics[height=2.5cm]{figs/Synchronizer.png}}
+  \centerline{\includegraphics[width=0.4\textwidth]{figs/synchronizer.png}}
   \caption{1-bit 2 Flip-Flop Synchronizer}
   \label{fig:synchronizer}
 \end{figure}
 
 Edit \verb|src/synchronizer.v| to implement the two flip-flop synchronizer.
-This module is parameterized by a \verb|width| parameter which indicates the number of one-bit signals to synchronize.
+This module is parameterized by a \verb|width| parameter which controls the number of one-bit signals to synchronize.
 
 \subsubsection{Synchronizer Simulation}
 A test is provided in \ttvar{sim/sync_testbench.v}.
-The testbenches to be run are stored in \verb|lab4/sim/tests|. Each \verb|.do| file in this directory is run when you run \verb|make| in the \verb|lab4/sim| directory. If you only want to run one testbench, you can rename all the other \verb|.do| files in this directory to have a different file extension. Alternatively, you can leave the file extensions alone, and specify the test you want to run like this:
+Run it as usual \ttvar{make sim/sync_testbench.vpd}.
+For details on the constructs/techniques/syntax used in this testbench, refer to Section \ref{sec:testbenchtechniques}.
 
-\begin{minted}{bash}
-cd lab4/sim
-make CASES="tests/sync_testbench.do"
-\end{minted}
-
-We have provided a testbench for your synchronizer called \verb|sync_testbench| in \verb|sync_testbench.v| (in the project source files). Take a look at the code for this testbench and run it; \textbf{the testbench shouldn't print any failure messages and you should inspect the waveform before you move on.} For details on the constructs/techniques/syntax used in this testbench, refer to Section \ref{sec:testbenchtechniques}: Testbench Techniques in this lab.
-
-\subsection{Debouncer and Edge Detector}
-
+\subsection{Debouncer}
 \begin{figure}[H]
-	\centerline{\includegraphics[height=5cm]{figs/lab2_fig2.png}}
+  \centerline{\includegraphics[height=5cm]{figs/debouncer.png}}
 \end{figure}
 
-Recall this graphic from the prelab debouncer reading. It is an overview of the debouncer circuit which includes the synchronizer circuit.
+Recall this graphic from the prelab debouncer reading.
 
-For this lab, the debouncer circuit will take a button's glitchy digital input and output a clean signal indicating a single button press. The reason we need a circuit for this can be seen in the figure below.
+The debouncer circuit takes a button's glitchy digital signal and outputs a clean signal indicating a single button press.
+The reason we need a circuit for this can be seen in the figure below.
 
 \begin{figure}[H]
-	\centerline{\includegraphics[height=5cm]{figs/lab2_fig4.png}}
+  \centerline{\includegraphics[width=0.5\textwidth]{figs/bouncing.png}}
 \end{figure}
 
-When we press the button, the signal doesn't behave like a perfect step function. Instead the button signal is glitchy due to mechanical ``bounce''. A debouncer turns this waveform, which shows a single button press, into a clean signal with a single voltage transition.
+When we press or depress a button, the signal doesn't behave like a perfect step function.
+Instead the button signal is glitchy due to mechanical ``bounce''.
+If we naively used the button signal directly there would be many spurious ``button presses".
 
-Take a look at \verb|debouncer.v| in your project sources. This is a parameterized debouncer which can debounce \verb|width| signals at a time. Your debouncer receives a vector of synchronized 1-bit signals and it outputs a debounced version of those signals. The other parameters reference the constants used in the circuit from the prelab reading.
+Look at \verb|src/debouncer.v|.
+This is a parameterized debouncer which can debounce \verb|width| signals at a time.
+The other parameters reference the constants used in the circuit from the prelab reading.
 
 The debouncer consists of:
-
 \begin{enumerate}
-	\item \textbf{Sample Pulse Generator} - Tells our saturating counter when to sample the input signal. It should output a 1, every \verb|sample_count_max| clock cycles. By default \verb|sample_count_max| is set to 25000.
-	\item \textbf{Saturating Counter} - This is a counter that counts up to \verb|pulse_count_max|. The saturating counter should increment by one if both the sample pulse and the input signal are high at a clock edge. At any clock edge, if the input signal is 0, the saturating counter should be reset to 0. Once the saturating counter reaches \verb|pulse_count_max|, it should hold that value indefinitely until the input signal falls to 0, upon which the saturating counter should be reset to 0. The \verb|debounced_signal| of your debouncer should be an equality check between the saturating counter and \verb|pulse_count_max|.
+  \item \textbf{Sample Pulse Generator} - Tells our saturating counter when to sample the input signal. It should output a 1, every \verb|sample_count_max| clock cycles. By default \verb|sample_count_max| is set to 25000.
+  \item \textbf{Saturating Counter} - This is a counter that counts up to \verb|pulse_count_max|.
+    If the sample pulse is high at a clock edge, increment the counter if the input signal is also high, else reset the counter to 0.
+    Once the saturating counter reaches \verb|pulse_count_max|, it should hold that value indefinitely until the sampled input signal becomes 0.
+    The \verb|debounced_signal| of your debouncer should be an equality check between the saturating counter and \verb|pulse_count_max|.
 \end{enumerate}
 
-You should use the same sample pulse generator for all input signals into your \verb|debouncer|, but you should have a separate saturating counter per input signal. You will likely need to use a 2D reg in Verilog to create the saturating counters. You will also likely need to use generate-for.
+You can use the same sample pulse generator for all input signals into your \verb|debouncer|, but you should have a separate saturating counter per input signal.
+You will likely need to use a 2D reg in Verilog to create the saturating counters. You may need to use generate-for.
 
-Here is an \textbf{example} of creating a 2D array:
+Here is an \textit{example} of creating a 2D array:
 
 \begin{minted}[tabsize=4]{verilog}
 reg [7:0] arr [3:0]; // 4 X 8 bit array
@@ -390,47 +391,46 @@ arr[0]; // First byte from arr (8 bits)
 arr[1][2]; // Third bit of 2nd byte from arr (1 bit)
 \end{minted}
 
-And here is an \textbf{example} of using a generate-for loop:
-
+And here is an \textit{example} of using a generate-for loop:
 \begin{minted}[tabsize=4]{verilog}
 genvar i;
 generate
-	for (i = 0; i < width; i = i + 1) begin:LOOP_NAME
-		always @ (posedge clk) begin
-			// Insert synchronous Verilog here
-		end
-	end
+  for (i = 0; i < width; i = i + 1) begin:LOOP_NAME
+    always @ (posedge clk) begin
+      // Insert synchronous Verilog here
+    end
+  end
 endgenerate
 \end{minted}
+Implement the debouncer.
 
-Implement the debouncer (in \verb|debouncer.v|).
-
-\subsubsection{Edge Detector}
-
-The debouncer will act to \emph{smooth-out} the button press signal. It is then followed up with an edge detector that can take the low-to-high transition of the debouncer output and use it to generate a 1 clock period wide pulse that the rest of our digital design can use.
-
-Create a variable-width edge detector in \verb|edge_detector.v|. 
-
-\subsubsection{Testing in Simulation}
-
-We've provided a testbench to test your debouncer and edge detector circuits in \verb|debouncer_testbench.v| and \verb|edge_detector_testbench.v|. Run the testbench, make sure it passes, and inspect the waveforms before FPGA testing. Make sure there are no undefined (red line) signals.
-
-If you are seeing issues where certain registers are red lines (X's), make sure you give them an initial state. For a 2D reg initialization, use the following initialization code in \verb|debouncer.v|:
-
-\begin{minted}[tabsize=4]{Verilog}
-integer k;
-initial begin
-	for (k = 0; k < width; k = k + 1) begin
-		saturating_counter[k] = 0;
-	end
-end
-\end{minted}
+\subsubsection{Debouncer Simulation}
+A testbench has been provided in \verb|sim/debouncer_testbench.v|. Run it as usual.
 
 The debouncer testbench has 2 tests:
 \begin{enumerate}
-	\item Verifies that if a glitchy signal initially bounces and then stays high for \textbf{less} than the saturation time, that the debouncer output never goes high.
-	\item Verifies that if a glitchy signal initially bounces and then stays high for \textbf{more} than the saturation time, that the debouncer goes high and stays high until the glitchy signal goes low.
+  \item Verifies that if a glitchy signal initially bounces and then stays high for \textbf{less} than the saturation time, that the debouncer output never goes high.
+  \item Verifies that if a glitchy signal initially bounces and then stays high for \textbf{more} than the saturation time, that the debouncer goes high and stays high until the glitchy signal goes low.
 \end{enumerate}
+
+If you are seeing issues where certain registers are red lines (X's), make sure you give them an initial state. For a 2D reg initialization, use the following initialization code in \verb|debouncer.v|:
+\begin{minted}[tabsize=4]{Verilog}
+integer k;
+initial begin
+  for (k = 0; k < width; k = k + 1) begin
+    saturating_counter[k] = 0;
+  end
+end
+\end{minted}
+
+\subsection{Edge Detector}
+The debouncer will act to \emph{smooth-out} the button press signal.
+It is then followed up with an edge detector that can take the low-to-high transition of the debouncer output and use it to generate a 1 clock cycle wide pulse that the rest of our digital design can use.
+
+Create a variable-width edge detector in \verb|src/edge_detector.v|.
+
+\subsubsection{Edge Detector Simulation}
+A testbench is provided in \verb|edge_detector_testbench.v|. Run as usual.
 
 The edge detector testbench tests 2 scenarios, when the \verb|signal_in| is a pulse 10 clock cycles wide and a pulse 1 clock cycle wide and verifies that the \verb|edge_detect_pulse| output goes high twice, both times with a width of 1 clock cycle.
 

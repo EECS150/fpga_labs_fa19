@@ -5,10 +5,7 @@
 `define SAMPLE_COUNT_MAX 10
 `define PULSE_COUNT_MAX 5
 
-/*
-    This testbench checks that your debouncer smooths-out the input signals properly. Refer to the spec for details.
-    This testbench should be throughly commented.
-*/
+// This testbench checks that your debouncer smooths-out the input signals properly. Refer to the spec for details.
 
 module debouncer_testbench();
     // Generate 100 Mhz clock
