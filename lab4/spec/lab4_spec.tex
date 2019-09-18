@@ -172,7 +172,7 @@ You can choose the depth of your ROM based on how long the music is.
 %the length of the sequence of tones you want to play.
 
 We've provided you with a few scripts that can generate a ROM from either a file with it's contents or even from sheet music.
-Run these commands from \verb|lab3/|.
+Run these commands from \verb|lab4/|.
 
 \begin{minted}{bash}
 python3 scripts/musicxml_parser.py musicxml/Twinkle_Twinkle_Little_Star.mxl music.txt
@@ -279,11 +279,11 @@ tone_generator tone_gen ();
 \end{itemize}
 
 \section{Simulating the music\_streamer}
-To simulate your \verb|music_streamer| open up \verb|lab3/src/music_streamer_testbench.v|.
+To simulate your \verb|music_streamer| open up \verb|lab4/src/music_streamer_testbench.v|.
 Note how the \verb|tone_generator| is wired to the \verb|music_streamer|.
 This test just runs the \verb|music_streamer| for a second.
 
-Run the test with \ttvar{make sim/music_streamer_testbench.vpd} for VCS or \ttvar{make sim/music_streamer_testbench.fst} for Icarus Verilog.
+Run the test with \ttvar{make} \ttvar{sim/music_streamer_testbench.vpd} for VCS or \ttvar{make} \ttvar{sim/music_streamer_testbench.fst} for Icarus Verilog.
 
 Inspect the waveform and verify that there are no undefined signals (red lines/X).
 Run the Python script \verb|python3 scripts/audio_to_sim.py sim/output.txt| to generate a \verb|.wav| file and listen to the \verb|music_streamer|.
