@@ -160,13 +160,15 @@ endmodule
 \end{minted}
 
 To power our \verb|tone_generator|, we will be using a ROM that is X entries/addresses deep and 24 bits wide.
-The ROM will contain tones that the \verb|tone_generator| will play. You can choose the depth of your ROM based on the length of the sequence of tones you want to play.
+The ROM will contain tones that the \verb|tone_generator| will play.
+You can choose the depth of your ROM based on the length of the sequence of tones you want to play.
 
-We've provided you with a few scripts that can generate a ROM from either a file with it's contents or even from sheet music. Run these commands from \verb|lab3/|.
+We've provided you with a few scripts that can generate a ROM from either a file with it's contents or even from sheet music.
+Run these commands from \verb|lab3/|.
 
 \begin{minted}{bash}
-python scripts/musicxml_parser.py musicxml/Twinkle_Twinkle_Little_Star.mxl music.txt
-python scripts/rom_generator.py music.txt ./lab3.srcs/sources_1/new/rom.v 1024 24
+python3 scripts/musicxml_parser.py musicxml/Twinkle_Twinkle_Little_Star.mxl music.txt
+python3 scripts/rom_generator.py music.txt ./lab3.srcs/sources_1/new/rom.v 1024 24
 \end{minted}
 
 The first script will parse a MusicXML file and turn it into a list of \verb|tone_switch_periods| for each of the notes for a piece of sheet music. The second script will take that list and turn it into a ROM that's 1024 entries deep with a width of 24 bits.

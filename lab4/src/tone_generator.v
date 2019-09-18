@@ -1,6 +1,7 @@
 `timescale 1ns/1ns
 module tone_generator (
     input clk,
+    input rst,
     input output_enable,
     input [23:0] tone_switch_period,
     input volume,
