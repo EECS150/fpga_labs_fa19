@@ -1,8 +1,8 @@
 // This module instantiates the synchronizer -> debouncer -> edge detector signal chain for button inputs
 module button_parser #(
-    parameter width,
-    parameter sample_count_max,
-    parameter pulse_count_max
+    parameter width = 1,
+    parameter sample_count_max = 25000,
+    parameter pulse_count_max = 150
 ) (
     input clk,
     input [width-1:0] in,

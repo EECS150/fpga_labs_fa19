@@ -92,6 +92,13 @@ example={#2}{#3},#1}
 \newcommand{\instbit}[1]{\mbox{\scriptsize #1}}
 \newcommand{\instbitrange}[2]{\instbit{#1} \hfill \instbit{#2}}
 
+% Break lines on texttt text on underscores
+% See: https://tex.stackexchange.com/questions/315369/how-to-deal-with-bad-line-wrapping-of-texttt
+\newcommand*\ttvar[1]{\texttt{\expandafter\dottvar\detokenize{#1}\relax}}
+\newcommand*\dottvar[1]{\ifx\relax#1\else
+  \expandafter\ifx\string_#1\string_\allowbreak\else#1\fi
+  \expandafter\dottvar\fi}
+
 \begin{document}
 
 \def\PYZsq{\textquotesingle}
@@ -160,34 +167,46 @@ endmodule
 \end{minted}
 
 To power our \verb|tone_generator|, we will be using a ROM that is X entries/addresses deep and 24 bits wide.
-The ROM will contain tones that the \verb|tone_generator| will play.
-You can choose the depth of your ROM based on the length of the sequence of tones you want to play.
+The ROM will contain notes that the \verb|tone_generator| will play.
+You can choose the depth of your ROM based on how long the music is.
+%the length of the sequence of tones you want to play.
 
 We've provided you with a few scripts that can generate a ROM from either a file with it's contents or even from sheet music.
 Run these commands from \verb|lab3/|.
 
 \begin{minted}{bash}
 python3 scripts/musicxml_parser.py musicxml/Twinkle_Twinkle_Little_Star.mxl music.txt
-python3 scripts/rom_generator.py music.txt ./lab3.srcs/sources_1/new/rom.v 1024 24
+python3 scripts/rom_generator.py music.txt src/rom.v 1024 24
 \end{minted}
 
-The first script will parse a MusicXML file and turn it into a list of \verb|tone_switch_periods| for each of the notes for a piece of sheet music. The second script will take that list and turn it into a ROM that's 1024 entries deep with a width of 24 bits.
+The first script will parse a MusicXML file and turn it into a list of \verb|tone_switch_periods| for each of the notes for a piece of sheet music.
+The second script will take that list and turn it into a ROM that's 1024 entries deep with a width of 24 bits.
 
-Take a look at \verb|music.txt| and \verb|src/rom.v|. You can download your own music in MusicXML format from here (\url{https://musescore.org/}) and run it through the same parser; it should ideally only have one part to work properly. You can also directly edit the \verb|music.txt| file to customize the contents of the ROM as you wish.
+Look at \verb|music.txt| and \verb|src/rom.v|.
+The \verb|last_address| port of the ROM outputs the last address that contains a valid note.
 
-\section{Design of the music\_streamer}
-Open up the \verb|music_streamer.v| file. You will need to modify this module to contain an instance of the ROM you created earlier and logic to address the ROM sequentially to play notes. The \verb|music_streamer| will play each note in the ROM for a predefined amount of time by sending it to the \verb|tone_generator|.
+You can download your own music in MusicXML format from here (\url{https://musescore.org/}) and run it through the same parser; it should ideally only have one part to work properly.
+You can also directly edit the \verb|music.txt| file to customize the contents of the ROM as you wish.
 
-We will play each note for 1/25th of a second. Calculate what that is in terms of 125Mhz clock cycles.
+\section{Designing the music\_streamer}
+Open up the \verb|music_streamer.v| file.
+You should instantiate the ROM you created earlier and add logic to address the ROM sequentially.
+The \verb|music_streamer| will play each note in the ROM for a predefined amount of time by sending it to the \verb|tone_generator| via the \verb|tone| output port.
+You should play each note for \textbf{1/25th of a second}.
 
-Now let's begin the design of the \verb|music_streamer| itself. Instantiate your ROM in the \verb|music_streamer| and connect the ROM's \verb|address| and \verb|data| ports to wire or reg nets that you create in your module.  The \verb|last_address| port outputs the last address in the ROM (depth).
+In this section, only concern yourself with the \verb|clk| input and the \verb|tone| output; leave the other inputs unused.
 
-Next, write the RTL that will increment the address supplied to the ROM every \textbf{1/25th of a second}. The data coming out of the ROM should be fed to the \verb|tone| output. The ROM's address input should go from 0 to the depth of the ROM and should then loop around back to 0. You don't have a reset signal, so define the initial state of any registers in your design for simulation purposes. Also hook up the \verb|rom_address| output to the ROM address currently being accessed.
+Next we'll cover some testbench constructs and test the \verb|music_streamer|.
 
-Now that you have implemented \verb|music_streamer|, create an instance of it in the module \verb|z1top.v|. Use the instance name \verb|streamer| to match the expected name in the \verb|.do| file. Instantiate a \verb|tone_generator| and wire \verb|SWITCHES[1]| to \verb|output_enable|, \verb|CLK_125MHZ_FPGA| to \verb|clk|, and \verb|aud_pwm| to \verb|square_wave_out|.  Assign \verb|aud_sd| to 1.  Connect the \verb|tone| output of the \verb|music_streamer| to the \verb|tone_switch_period| input of the \verb|tone_generator|. Connect the \verb|music_streamer|'s \verb|clk| input to the global clock signal. Finally, connect  its \verb|rom_address| output to the \verb|LEDS|s by routing the top 6 bits of address.
+%Next, write the RTL that will increment the address supplied to the ROM every \textbf{1/25th of a second}.
+%The data coming out of the ROM should be fed to the \verb|tone| output.
+%The ROM's address input should go from 0 to the depth of the ROM and should then loop around back to 0. You don't have a reset signal, so define the initial state of any registers in your design for simulation purposes. Also hook up the \verb|rom_address| output to the ROM address currently being accessed.
+
+%Now that you have implemented \verb|music_streamer|, create an instance of it in the module \verb|z1top.v|. Use the instance name \verb|streamer| to match the expected name in the \verb|.do| file. Instantiate a \verb|tone_generator| and wire \verb|SWITCHES[1]| to \verb|output_enable|, \verb|CLK_125MHZ_FPGA| to \verb|clk|, and \verb|aud_pwm| to \verb|square_wave_out|.  Assign \verb|aud_sd| to 1.  Connect the \verb|tone| output of the \verb|music_streamer| to the \verb|tone_switch_period| input of the \verb|tone_generator|. Connect the \verb|music_streamer|'s \verb|clk| input to the global clock signal. Finally, connect  its \verb|rom_address| output to the \verb|LEDS|s by routing the top 6 bits of address.
 
 \section{Testbench Techniques} \label{sec:testbenchtechniques}
 There are several testbenches included in this lab for your synchronizer, edge detector, shift register, debouncer, and music streamer that introduce you to some useful Verilog testbench constructs.
+See Discussion 3 for more slides and example code.
 
 \begin{itemize}
 \item \verb|@(posedge <signal>)| and \verb|@(negedge <signal>)| - These are a different type of delay statement from what you have seen before. \verb|#10| would advance the simulation by 10 timesteps. These commands will advance the simulation until the \verb|<signal>| rises or falls.
@@ -205,10 +224,10 @@ Simulation time will advance until we have seen two rising edges of \verb|signal
 For example:
 \begin{minted}[frame=single, tabsize=4]{verilog}
 repeat (2) @(negedge clk);
-repeat (10) begin 
-	@(posedge clk);
+repeat (10) begin
+  @(posedge clk);
 end
-\end{minted} 
+\end{minted}
 
 The simulation will advance until we have seen 2 falling clock edges and will then advance further until we have seen 10 rising clock edges.
 
@@ -218,15 +237,15 @@ For example:
 \begin{minted}[frame=single]{verilog}
 $display("Wire x in decimal is %d", x);
 $display("Wire x in binary is %b", x);
-\end{minted} 
+\end{minted}
 
-\item \verb|tasks| - tasks are subroutines where you can group and organize some commands rather than haphazardly putting them everywhere. They can take inputs and assign outputs. 
+\item \verb|tasks| - tasks are subroutines where you can group and organize some commands rather than haphazardly putting them everywhere. They can take inputs and assign outputs.
 
 \begin{minted}[frame=single, tabsize=4]{verilog}
 task wait_for_n_clocks();
 input [7:0] num_edges;
 begin
-	repeat (num_edges) @(posedge clk);
+  repeat (num_edges) @(posedge clk);
 end
 endtask
 \end{minted}
@@ -236,70 +255,97 @@ endtask
 For example:
 \begin{minted}[frame=single, tabsize=4]{verilog}
 fork
-	begin
-		task1();
-	end
-	begin
-		$display("Another thread");
-		task2();
-	end
+  begin
+    task1();
+  end
+  begin
+    $display("Another thread");
+    task2();
+  end
 join
 \end{minted}
 
-Multiple threads of execution are created by putting multiple begin/end blocks in the fork-join block. In this example, thread 1 runs \verb|task1()|, while thread 2 first \verb|$display|s some text then runs \verb|task2()|. The threads operate in parallel.
+Multiple threads of execution are created by putting multiple begin/end blocks in the fork-join block.
+In this example, thread 1 runs \verb|task1()|, while thread 2 first \verb|$display|s some text then runs \verb|task2()|.
+The threads operate in parallel.
 
 \item Hierarchical Paths - you can access signals inside an instantiated module for debugging purposes. This can be helpful in some cases where you want to look at an internal signal but don't want to create another output port just for debug.
 
 For example:
 \begin{minted}[frame=single, breaklines]{verilog}
 tone_generator tone_gen ();
-$display("Signal inside my tone_generator instance, clock_counter: %b", tone_gen.clock_counter);
-\end{minted} 
+\$display("Signal inside my tone_generator instance, counter: %b", tone_gen.counter);
+\end{minted}
 \end{itemize}
 
-
 \section{Simulating the music\_streamer}
-To simulate your \verb|music_streamer| open up the \verb|lab3/src/music_streamer_testbench.v|. In contrast to the \verb|tone_generator_testbench| where the \verb|tone_generator| was instantiated in isolation, in this testbench we are instantiating our entire top-level design, \verb|z1top|. This testbench is referred to as a system-level testbench, which tests our entire design using top-level I/O, in contrast to the \verb|tone_generator_testbench| which is a block-level testbench. This is similar to the difference between unit and integration tests in software development.
+To simulate your \verb|music_streamer| open up \verb|lab3/src/music_streamer_testbench.v|.
+Note how the \verb|tone_generator| is wired to the \verb|music_streamer|.
+This test just runs the \verb|music_streamer| for a second.
 
-You can see that this testbench just runs a simulation for 2 seconds and then exits. You might have to modify the \verb|music_streamer_testbench.do| file to match the name of your module instances in \verb|z1top.v|.
+Run the test with \ttvar{make sim/music_streamer_testbench.vpd} for VCS or \ttvar{make sim/music_streamer_testbench.fst} for Icarus Verilog.
 
-To execute the testbench, run \verb|make CASES=tests/music_streamer_testbench.do| in \verb|lab3/sim|. This may take several minutes to complete. You may have to run \verb|make clean| before running \verb|make| if ModelSim has cached build artifacts.
+Inspect the waveform and verify that there are no undefined signals (red lines/X).
+Run the Python script \verb|python3 scripts/audio_to_sim.py sim/output.txt| to generate a \verb|.wav| file and listen to the \verb|music_streamer|.
+It should sound like the first second of the song that was loaded on the ROM.
 
-Inspect your waveform to make sure you get what you expect. Verify that there are no undefined signals (red lines, x) Then run the Python script to generate a \verb|.wav| file of your simulation results and listen to your \verb|music_streamer|. It should sound like the first few seconds of the song that was loaded on the ROM.
+\subsection{Verify your Code Works For Rest Notes}
+In simulation, you can often catch bugs that would be difficult or impossible to catch by running your circuit on the FPGA.
+You should verify that if your ROM contains an entry that is zero (i.e. generate a 0Hz wave), that the \verb|tone_generator| holds the \verb|square_wave_out| output at either 1 or 0 with no oscillation.
 
-\section{Verify your Code Works For Rest Notes}
-In simulation, you can often catch bugs that would be difficult or impossible to catch by running your circuit on the FPGA. You should verify that if your ROM contains an entry that is zero (i.e. generate a 0Hz wave), that the \verb|tone_generator| holds the \verb|square_wave_out| output at either 1 or 0 with no oscillation. Verify this in simulation, and prove the correct functionality during checkoff.
+\begin{texexptitled}{Music Streamer Simulation}{}
+  \begin{enumerate}[a)]
+    \item Save a waveform screenshot demonstrating that a \verb|tone_switch_period| of 0 sent by the ROM results in no oscillation of the \verb|square_wave_out| output.
+    \item Save an audio file from the \ttvar{music_streamer} simulation for checkoff.
+  \end{enumerate}
+\end{texexptitled}
 
-\section{Try it on the FPGA!}
-Now try your \verb|music_streamer| on the FPGA. You should expect the output to be the same as in simulation. The \verb|SWITCHES[1]| switch should still work to disable the output of the \verb|tone_generator|. Show your final results, simulation, and the working design on the FPGA to the TA for checkoff.
+\subsection{FPGA Time}
+Instantiate the \ttvar{music_streamer} and \ttvar{tone_generator} in \ttvar{src/z1top.v} similar to the \ttvar{music_streamer_testbench}.
+Connect \verb|SWITCHES[0]| to the \verb|tone_generator|'s \verb|output_enable| and wire the \verb|volume| input to 0.
+Run \verb|make impl| and \verb|make program| and hear the music played from the FPGA.
 
-\section{Synchronizer, Debouncer}
+\section{Input Conditioning Circuits}
+We want to use the buttons on the Pynq board to control the playback of the music by adjusting the tempo, or pausing the music and playing it in reverse.
+To safely use the button signals, we have to design input conditioning circuits to handle metastability and button bounce.
 
 \subsection{Synchronizer}
-In Verilog (RTL), digital signals are either 0's or 1's. In a digital circuit, a 0 or 1 corresponds to a low or high voltage. If the circuit is well designed and timed (fully synchronous), we only have to worry about the low and high voltage states, but in this lab we will be dealing with asynchronous signals.
+In Verilog (RTL), digital signals are either 0's or 1's.
+In a digital circuit, a 0 or 1 corresponds to a low or high voltage.
+If the circuit is well designed and timed (fully synchronous), we only have to worry about the low and high voltage states.
 
-The signals coming from the push buttons and slide switches on the PYNQ-Z1 board don't have an associated clock signal. For the push-buttons in particular, when those signals are put through a register, the hold or setup time constraints of that register may be violated. This may put that register into a \textbf{metastable} state.
+The signals coming from the push buttons and slide switches on the Pynq board don't have an associated clock (asynchronous).
+When the button signals are put through a register, its hold or setup time may be violated.
+This may put that register into a \textit{metastable} state (Figure \ref{fig:metastability}).
 
-\begin{figure}[H]
-	\centerline{\includegraphics[height=3cm]{figs/lab2_fig3.png}}
-	\caption{The `ball on a hill' metaphor for metastability. If a register's timing constraints are violated, its output voltage oscillates and after some time unpredictably settles to a stable state.}
+\begin{figure}
+  \centerline{\includegraphics[height=3cm]{figs/lab2_fig3.png}}
+  \caption{The `ball on a hill' metaphor for metastability. If a register's timing constraints are violated, its output voltage oscillates and after some time unpredictably settles to a stable state.}
+  \label{fig:metastability}
 \end{figure}
 
-In a fully synchronous circuit, the timing tools will determine the fastest clock frequency under which the setup time constraints are all respected and the routing tools will ensure that any hold time constraints are handled. Introducing an asynchronous signal that isn't changing with respect to a clock signal can cause a register to go into a metastable state. This is undesirable since this will cause a `mid-rail' voltage to propagate to other logic elements and can cause catastrophic timing violations that the tools never saw coming.
+In a fully synchronous circuit, the timing tools will determine the fastest clock frequency under which the setup time constraints are all respected and the routing tools will ensure that any hold time constraints are handled.
+An asynchronous signal could violate those constraints, and cause a `mid-rail' voltage from a register to propagate to other logic elements.
+This can cause catastrophic timing violations that the tools never saw coming.
 
-We will implement a synchronizer circuit that will safely bring an asynchronous signal into a synchronous circuit. The synchronizer needs to have a very small probability of allowing metastability to propagate into our synchronous circuit.
+We will implement a synchronizer circuit that will safely bring an asynchronous signal into a synchronous circuit.
+The synchronizer needs to have a very small probability of allowing metastability to propagate into our synchronous circuit.
 
-This synchronizer circuit we want you to implement for this lab is relatively simple. For synchronizing one bit, it is a pair of flip-flops connected serially. This circuit synchronizes an asynchronous signal (not related to any clock) coming into the FPGA. We will be using our synchronizer circuit to bring any asynchronous off-FPGA signals into the clock domain of our FPGA design.
+This synchronizer circuit for this lab is relatively simple (Figure \ref{fig:synchronizer}).
+For synchronizing one bit, it is a pair of flip-flops connected serially.
 
 \begin{figure}[H]
-	\vspace{0.5cm}
-	\centerline{\includegraphics[height=2.5cm]{figs/Synchronizer.png}}
-	\caption{1-bit 2 Flip-Flop Synchronizer}
+  \vspace{0.5cm}
+  \centerline{\includegraphics[height=2.5cm]{figs/Synchronizer.png}}
+  \caption{1-bit 2 Flip-Flop Synchronizer}
+  \label{fig:synchronizer}
 \end{figure}
 
-Edit the \verb|synchronizer.v| (in your project sources) file to implement the two flip-flop synchronizer. This module is parameterized by a \verb|width| parameter which indicates the number of one-bit signals to synchronize.
+Edit \verb|src/synchronizer.v| to implement the two flip-flop synchronizer.
+This module is parameterized by a \verb|width| parameter which indicates the number of one-bit signals to synchronize.
 
-\subsubsection{Testing in Simulation}
+\subsubsection{Synchronizer Simulation}
+A test is provided in \ttvar{sim/sync_testbench.v}.
 The testbenches to be run are stored in \verb|lab4/sim/tests|. Each \verb|.do| file in this directory is run when you run \verb|make| in the \verb|lab4/sim| directory. If you only want to run one testbench, you can rename all the other \verb|.do| files in this directory to have a different file extension. Alternatively, you can leave the file extensions alone, and specify the test you want to run like this:
 
 \begin{minted}{bash}

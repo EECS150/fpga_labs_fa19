@@ -16,7 +16,7 @@ step_to_int = {
     'E': 8,
     'F': 9,
     'G': 11
-} 
+}
 
 # Remove the temp directory from previous runs
 if (os.path.isdir('temp/')):
@@ -35,11 +35,11 @@ zip_ref.close()
 
 # Fetch and parse the XML file in the temp directory
 xml_filepath = glob.glob("temp/*.xml")
-print(xml_filepath)
+#print(xml_filepath)
 xmldoc = minidom.parse(xml_filepath[0])
 
 # Print the XML tree for debugging
-print(xmldoc.toprettyxml())
+#print(xmldoc.toprettyxml())
 
 # For the first part in the sheet music
 parts = xmldoc.getElementsByTagName('part')[0]
@@ -93,8 +93,9 @@ with open(memory_contents_filepath, 'w') as memory_file:
             for i in range(0, 4 * note[1]):
                 memory_file.write(str(0) + "\n")
             continue
+        # Write the note in terms of tone_switch_period (125 Mhz clock)
         for i in range(0, 4 * note[1]):
-            memory_file.write(str(int(33e6/note[0]/2)) + "\n")
+            memory_file.write(str(int(125e6/note[0]/2)) + "\n")
         # Write a note pause for each note corresponding to its duration
         for i in range(0, note[1]):
             memory_file.write(str(0) + "\n")

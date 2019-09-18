@@ -1,13 +1,8 @@
 `timescale 1ns/100ps
-
-`define SECOND 1000000000
-`define MS 1000000
 `define CLK_PERIOD 10
 
-/*
-    This testbench checks that your synchronizer is made up of 2 flip-flops serially connected.
-    This testbench cannot model metastability.
-*/
+// This testbench checks that your synchronizer is made up of 2 flip-flops serially connected.
+// This testbench cannot model metastability.
 
 module sync_testbench();
     // Generate 100 Mhz clock
@@ -30,12 +25,12 @@ module sync_testbench();
         fork
             // This first thread will send a test signal into the DUT's async_signal input
             begin
-                async_signal <= 1'b0;
-                #(`CLK_PERIOD * 2) async_signal <= 1'b1;
-                #(`CLK_PERIOD * 1) async_signal <= 1'b0;
-                #(`CLK_PERIOD * 3) async_signal <= 1'b1;
-                #(`CLK_PERIOD * 2) async_signal <= 1'b0;
-                #(`CLK_PERIOD * 4) async_signal <= 1'b1;
+                async_signal = 1'b0;
+                #(`CLK_PERIOD * 2) async_signal = 1'b1;
+                #(`CLK_PERIOD * 1) async_signal = 1'b0;
+                #(`CLK_PERIOD * 3) async_signal = 1'b1;
+                #(`CLK_PERIOD * 2) async_signal = 1'b0;
+                #(`CLK_PERIOD * 4) async_signal = 1'b1;
             end
             // This second thread will monitor the DUT's sync_signal output for the correct response
             // The #1 is a Verilog oddity that's needed since the sync_signal changes after the rising edge of the clock,

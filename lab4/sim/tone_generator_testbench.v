@@ -17,6 +17,7 @@ module tone_generator_testbench();
 
     tone_generator audio_controller (
         .clk(clock),
+        .rst(0),
         .output_enable(output_enable),
         .tone_switch_period(tone_to_play),
         .volume(volume),

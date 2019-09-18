@@ -2,55 +2,34 @@
 
 `define SECOND 1000000000
 `define MS 1000000
-`define SAMPLE_PERIOD 22675.7
+`define CLOCKS_PER_SAMPLE 2500 // 125 Mhz clock, 50 kHz audio, 2500 clocks per sample
 
 module music_streamer_testbench();
     // Global signals
-    reg clock;
-    reg reset;
-
-    // Music streamer inputs
-    reg tempo_up;
-    reg tempo_down;
-    reg tempo_reset;
-    reg play_pause;
-    reg switch_fn;
-    reg switch_mode;
-    reg edit_next_node;
-    reg edit_prev_node;
-
-    initial begin
-      tempo_up = 0;
-      tempo_down = 0;
-      tempo_reset = 0;
-      play_pause = 0;
-      switch_fn = 0;
-      switch_mode = 0;
-      edit_next_node = 0;
-      edit_prev_node = 0;
-    end
-
-    // Music streamer outputs
-    wire [23:0] tone_to_play;
-    wire led_paused;
-    wire led_regular_play;
-    wire led_reverse_play;
-    wire led_play_seq;
-    wire led_edit_seq;
-
-    // Tone generator input
-    reg output_enable;
-
-    // Tone generator output
-    wire sq_wave;
+    reg clock = 0;
+    reg reset = 0;
 
     initial clock = 0;
     always #(8/2) clock <= ~clock;
 
-    tone_generator audio_controller (
+    // Music streamer inputs
+    reg tempo_up = 0;
+    reg tempo_down = 0;
+    reg play_pause = 0;
+    reg reverse = 0;
+
+    // Music streamer outputs
+    wire [23:0] tone_to_play;
+    wire [2:0] leds;
+
+    // Tone generator output
+    wire sq_wave;
+
+    tone_generator tg (
         .clk(clock),
         .rst(reset),
-        .output_enable(output_enable),
+        .output_enable(1),
+        .volume(1),
         .tone_switch_period(tone_to_play),
         .square_wave_out(sq_wave)
     );
@@ -60,76 +39,68 @@ module music_streamer_testbench();
         .rst(reset),
         .tempo_up(tempo_up),
         .tempo_down(temp_down),
-        .tempo_reset(tempo_reset),
         .play_pause(play_pause),
-        .switch_fn(switch_fn),
-        .switch_mode(switch_mode),
-        .edit_next_node(edit_next_node),
-        .edit_prev_node(edit_prev_node),
-        .led_paused(led_paused),
-        .led_regular_play(led_regular_play),
-        .led_reverse_play(led_reverse_play),
-        .led_play_seq(led_play_seq),
-        .led_edit_seq(led_edit_seq),
+        .reverse(reverse),
+        .leds(leds),
         .tone(tone_to_play)
     );
 
     initial begin
+        `ifdef IVERILOG
+            $dumpfile("tone_generator_testbench.fst");
+            $dumpvars(0,tone_generator_testbench);
+        `endif
+
         reset = 0;
         // Reset our modules and enable the tone_generator output
         @(posedge clock);
         reset = 1;
         @(posedge clock);
         reset = 0;
-        output_enable = 1;
 
         // Warning: do not exceed delays of 2 seconds at a time
         // otherwise the delay won't work properly with our simulator
         #(1 * `SECOND);
 
-        // Get FSM into PAUSED state by simulating center button press
+        /*
+        // Get FSM into PAUSED state by simulating button press
         @(posedge clock);
         play_pause = 1'b1;
         @(posedge clock);
         play_pause = 1'b0;
         #(300 * `MS);
 
-        // Get FSM into REGULAR_PLAY, then REVERSE_PLAY state
-        @(posedge clock);
-        play_pause = 1'b1;
-        @(posedge clock);
-        play_pause = 1'b0;
-        @(posedge clock);
-        switch_mode = 1'b1;
-        @(posedge clock);
-        switch_mode = 1'b0;
-        #(300 * `MS);
-
-        // Simulate tempo adjustment by clicking wheel left 10 times
+        // Simulate tempo adjustment
         repeat (10) begin
             @(posedge clock);
             tempo_up = 1'b1;
             @(posedge clock);
             tempo_up = 1'b0;
         end
-
-        // Move to the REGULAR_PLAY state with tempo adjusted and see how music sounds
-        @(posedge clock);
-        switch_mode = 1'b1;
-        @(posedge clock);
-        switch_mode = 1'b0;
         #(1 * `SECOND);
-
+        */
         $finish();
     end
 
     integer file;
+    integer i;
+    integer count;
     initial begin
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
         file = $fopen("output.txt", "w");
         forever begin
-            $fwrite(file, "%h\n", sq_wave);
-            #(`SAMPLE_PERIOD);
+            count = 0;
+            for (i = 0; i < `CLOCKS_PER_SAMPLE; i = i + 1) begin
+                @(posedge clock);
+                count = count + sq_wave;
+            end
+            $fwrite(file, "%d\n", count);
         end
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
     end
 
 endmodule

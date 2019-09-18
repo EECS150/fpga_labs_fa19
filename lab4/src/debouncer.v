@@ -1,7 +1,7 @@
 module debouncer #(
     parameter width = 1,
-    parameter sample_count_max,
-    parameter pulse_count_max,
+    parameter sample_count_max = 25000,
+    parameter pulse_count_max = 150,
     parameter wrapping_counter_width = $clog2(sample_count_max),
     parameter saturating_counter_width = $clog2(pulse_count_max))
 (
