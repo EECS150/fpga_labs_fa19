@@ -29,24 +29,24 @@ module edge_detector_testbench();
         `ifndef IVERILOG
             $vcdpluson;
         `endif
-        // Set initial state, wait for 1 clock cycle
+        // Set initial state, wait for a few clock cycles
         signal_in = 0;
-        @(posedge clk);
+        repeat (10) @(posedge clk);
 
         fork
             // This thread provides the inputs for the edge detector
             begin
                 // Pulse signal_in for 10 clock cycles
                 signal_in[0] = 1'b1;
-                repeat (10) @(posedge clk);
+                repeat (10) @(posedge clk); #1;
                 signal_in[0] = 1'b0;
 
                 // Wait for 10 clock cycles
-                repeat (10) @(posedge clk);
+                repeat (10) @(posedge clk); #1;
 
                 // Pulse signal_in for 1 clock cycle
                 signal_in[0] = 1'b1;
-                repeat (1) @(posedge clk);
+                repeat (1) @(posedge clk); #1;
                 signal_in[0] = 1'b0;
 
                 // Wait for 10 clock cycles
@@ -74,7 +74,7 @@ module edge_detector_testbench();
             end
 
             begin
-                repeat (1000) @(posedge clk);
+                repeat (100) @(posedge clk);
                 if (!done) begin
                     $display("Failure: Timing out after 1000 cycles");
                     $finish();
