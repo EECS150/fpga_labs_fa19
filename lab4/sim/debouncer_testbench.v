@@ -28,12 +28,18 @@ module debouncer_testbench();
 
     // Testbench variables
     integer test1_done = 0;
-    integer test2_output_should_rise = 0;
-    integer test2_output_should_fall = 0;
-    integer test2_done = 0;
 
     initial begin
-        glitchy_signal = 3'd0;
+        $timeformat(-9, 2, " ns", 20);
+        `ifdef IVERILOG
+            $dumpfile("debouncer_testbench.fst");
+            $dumpvars(0,debouncer_testbench);
+        `endif
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
+
+        glitchy_signal = 'd0;
         @(posedge clk);
 
         // We will use our first glitchy_signal to verify that if a signal bounces around and goes low
@@ -77,35 +83,29 @@ module debouncer_testbench();
                 // Bring the signal high and hold past the point at which the debouncer should saturate
                 glitchy_signal[1] = 1'b1;
                 repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) @(posedge clk);
-                test2_output_should_rise = 1;
-                repeat (`SAMPLE_COUNT_MAX * (3)) @(posedge clk);
+                if (debounced_signal[1] !== 1'b1) $display("Failure 1: The debounced output[1] should have gone high by now %t", $time);
 
-                // Pull the signal low and the output should immediately fall
+                // While the signal is high, the debounced output should remain high
+                repeat (`SAMPLE_COUNT_MAX * (3)) begin
+                    if (debounced_signal[1] !== 1'b1) $display("Failure 2: The debounced output[1] should stay high once the counter saturates at %t", $time);
+                    @(posedge clk);
+                end
+
+                // Pull the signal low and the output should fall after the next sampling period
+                // The output is only guaranteed to fall after the next sampling period
+                // Wait until another sampling period has definetely occured
                 @(posedge clk);
                 glitchy_signal[1] = 1'b0;
-                test2_output_should_fall = 1;
+                repeat (`SAMPLE_COUNT_MAX + 1) @(posedge clk);
+
+                repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) begin
+                    if (debounced_signal[1] !== 1'b0) $display("Failure 3: The debounced output[1] should have falled by now %t", $time);
+                    @(posedge clk);
+                end
 
                 // Wait for some time to ensure the signal stays low
-                repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) @(posedge clk);
-                test2_done = 1;
-            end
-            begin
-                while (!test2_output_should_rise) begin
-                    @(posedge clk);
-                end
-                if (debounced_signal[1] !== 1'b1) begin // test2_output_should_rise = 1
-                    $display("Failure 1: The debounced output[1] should have gone high by now");
-                end
-                while (!test2_output_should_fall) begin
-                    if (debounced_signal[1] !== 1'b1) $display("Failure 2: The debounced output[1] should stay high once the counter saturates");
-                    @(posedge clk);
-                end
-                @(posedge clk);
-                if (debounced_signal[1] !== 1'b0) begin
-                    $display("Failure 3: The debounced output[1] should have fallen as soon as the glitchy signal fell");
-                end
-                while (!test2_done) begin
-                    if (debounced_signal[1] !== 1'b0) $display("Failure 4: The debounced output[1] should remain low after the glitchy signal falls");
+                repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) begin
+                    if (debounced_signal[1] !== 1'b0) $display("Failure 4: The debounced output[1] should remain low at %t", $time);
                     @(posedge clk);
                 end
             end
@@ -113,6 +113,9 @@ module debouncer_testbench();
 
         repeat (100) @(posedge clk);
         $display("Test Done! If any failures were printed, fix them! Otherwise this testbench passed.");
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
         $finish();
     end
 endmodule

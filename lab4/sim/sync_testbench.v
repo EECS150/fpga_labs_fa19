@@ -20,6 +20,14 @@ module sync_testbench();
     );
 
     initial begin
+        `ifdef IVERILOG
+            $dumpfile("sync_testbench.fst");
+            $dumpvars(0,sync_testbench);
+        `endif
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
+
         // We use fork-join to create 2 threads that operate in parallel
         fork
             // This first thread will send a test signal into the DUT's async_signal input
@@ -46,6 +54,9 @@ module sync_testbench();
         repeat (3) @(posedge clk);  // Wait for a little time and perform the final check again
         if (sync_signal !== 1'b1) $display("Check 6 failed");
         $display("Test Done! If any failures were printed, fix them! Otherwise this testbench passed.");
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
         $finish();
     end
 endmodule

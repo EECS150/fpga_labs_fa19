@@ -47,8 +47,8 @@ module music_streamer_testbench();
 
     initial begin
         `ifdef IVERILOG
-            $dumpfile("tone_generator_testbench.fst");
-            $dumpvars(0,tone_generator_testbench);
+            $dumpfile("music_streamer_testbench.fst");
+            $dumpvars(0,music_streamer_testbench);
         `endif
 
         reset = 0;

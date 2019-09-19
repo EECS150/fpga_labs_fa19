@@ -22,6 +22,13 @@ module edge_detector_testbench();
 
     reg done = 0;
     initial begin
+        `ifdef IVERILOG
+            $dumpfile("edge_detector_testbench.fst");
+            $dumpvars(0,edge_detector_testbench);
+        `endif
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
         // Set initial state, wait for 1 clock cycle
         signal_in = 0;
         @(posedge clk);
@@ -75,6 +82,9 @@ module edge_detector_testbench();
             end
         join
         $display("Test Done! If any failures were printed, fix them! Otherwise this testbench passed.");
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
         $finish();
     end
 endmodule
