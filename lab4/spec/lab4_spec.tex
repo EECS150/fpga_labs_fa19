@@ -497,68 +497,11 @@ Next in \verb|z1top.v|, delete the \ttvar{button_parser} test circuit and connec
 
 Try it out on the FPGA and verify that you have control of your \verb|music_streamer|'s tempo using the buttons.
 
-\section{Music Streamer FSM}
-Implement a simple FSM in the \verb|music_streamer|.
-
-The FSM has 3 states: \verb|PAUSED|, \verb|REGULAR_PLAY|, \verb|REVERSE_PLAY|.
-Here is the state transition diagram:
-\begin{center}
-\begin{tikzpicture}[shorten >=1pt, node distance=10cm,on grid, auto,line width=0.05cm]
-  \tikzstyle{state} = [draw, very thick, fill=white, rectangle, minimum height=3em, minimum width=7em, node distance=17em, font={\sffamily\bfseries}]
-  \tikzstyle{stateEdgePortion} = [black,thick];
-  \tikzstyle{stateEdge} = [stateEdgePortion,->,line width=3cm];
-  \tikzstyle{edgeLabel} = [pos=0.5, text centered, font={\sffamily\small}];
-
-  \node[state,initial](rp) {REGULAR\_PLAY};
-  \node[state](revp) [below =of rp]{REVERSE\_PLAY};
-  \node[state](p) [right=of rp]{PAUSED};
-
-  \path[->]
-  (rp) edge node {Play-pause button} (p)
-    edge [swap] node {Reverse button} (revp)
-    edge [loop above] node {} (rp)
-  (p) edge node {} (rp)
-    edge [loop below] node {} (p)
-  (revp) edge [swap] node {Play-pause button} (p)
-    edge [swap] node {} (rp)
-    edge [loop below] node {} (revp);
-\end{tikzpicture}
-\end{center}
-
-\begin{enumerate}
-  \item The initial state should be \verb|REGULAR_PLAY|.
-  \item Pressing the \verb|play_pause| button should transition you into the \verb|PAUSED| state from either the \verb|REGULAR_PLAY| or \verb|REVERSE_PLAY| states. Pressing the same button while in the \verb|PAUSED| state should transition the FSM to the \verb|REGULAR_PLAY| state.
-  \item In the \verb|PAUSED| state, the ROM address should be held steady at its value before the transition into \verb|PAUSED| and no sound should come out of the speaker. After leaving the \verb|PAUSED| state the ROM address should begin incrementing again from where it left off and the speaker should play the tones.
-  \item You can toggle between the \verb|REGULAR_PLAY| and \verb|REVERSE_PLAY| states by using the \verb|reverse| button. In the \verb|REVERSE_PLAY| state you should decrement the ROM address by 1 rather than incrementing it by 1 every X clock cycles as defined by the tempo.
-  \item If you don't press any buttons, the FSM shouldn't transition to another state.
-\end{enumerate}
-
-The \verb|music_streamer| takes in user button inputs (\verb|play_pause, reverse|) that it can use to transition states.
-
-Also, drive the LEDs such that they show the current state. An example:
-\renewcommand{\arraystretch}{1.5}
-\begin{center}
-\begin{tabular}{| l | l |}
-  \hline
-  \textbf{LED} & \textbf{Value} \\ \hline
-      leds[0] & \verb|current_state| == \verb|REGULAR_PLAY| \\ \hline
-      leds[1] & \verb|current_state| == \verb|PAUSED| \\ \hline
-      leds[2] & \verb|current_state| == \verb|REVERSE_PLAY| \\ \hline
-\end{tabular}
-\end{center}
-
-Look at the commented code in \ttvar{music_streamer_testbench.v} that tests the state machine.
-Uncomment and run the test and inspect the waveform to check that the FSM is performing correctly.
-
-Next, modify \verb|z1top.v| to connect the \verb|play_pause| and \verb|reverse| ports to \verb|buttons_pressed| [2] and [3] respectively.
-
-Finally, program the FPGA with the \verb|music_streamer|, and verify its functionality.
-
 \section{Checkoff}
 \begin{enumerate}
   \item Show the RTL for the input conditioning circuits and music streamer
   \item Play an audio file generated from a simulation
-  \item Demonstrate the music streamer on the FPGA (FSM, tempo control, reset)
+  \item Demonstrate the music streamer on the FPGA (tempo control, reset)
 \end{enumerate}
 
 \subsection{Lab Report}
