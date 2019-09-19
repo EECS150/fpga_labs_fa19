@@ -80,10 +80,13 @@ module debouncer_testbench();
                     glitchy_signal[1] = ~glitchy_signal[1];
                     @(posedge clk);
                 end
+
                 // Bring the signal high and hold past the point at which the debouncer should saturate
                 glitchy_signal[1] = 1'b1;
                 repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) @(posedge clk);
+
                 if (debounced_signal[1] !== 1'b1) $display("Failure 1: The debounced output[1] should have gone high by now %t", $time);
+                @(posedge clk);
 
                 // While the signal is high, the debounced output should remain high
                 repeat (`SAMPLE_COUNT_MAX * (3)) begin
@@ -94,14 +97,11 @@ module debouncer_testbench();
                 // Pull the signal low and the output should fall after the next sampling period
                 // The output is only guaranteed to fall after the next sampling period
                 // Wait until another sampling period has definetely occured
-                @(posedge clk);
                 glitchy_signal[1] = 1'b0;
                 repeat (`SAMPLE_COUNT_MAX + 1) @(posedge clk);
 
-                repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) begin
-                    if (debounced_signal[1] !== 1'b0) $display("Failure 3: The debounced output[1] should have falled by now %t", $time);
-                    @(posedge clk);
-                end
+                if (debounced_signal[1] !== 1'b0) $display("Failure 3: The debounced output[1] should have falled by now %t", $time);
+                @(posedge clk);
 
                 // Wait for some time to ensure the signal stays low
                 repeat (`SAMPLE_COUNT_MAX * (`PULSE_COUNT_MAX + 1)) begin
