@@ -295,7 +295,7 @@ You should verify that if your ROM contains an entry that is zero (i.e. generate
 
 \begin{texexptitled}{Music Streamer Simulation}{}
   \begin{enumerate}[a)]
-    \item Save a waveform screenshot demonstrating that a \verb|tone_switch_period| of 0 sent by the ROM results in no oscillation of the \verb|square_wave_out| output.
+    \item Save a waveform screenshot demonstrating that a \verb|tone_switch_period| of 0 sent by the ROM results in no oscillation of the \verb|square_wave_out| output for checkoff.
     \item Save an audio file from the \ttvar{music_streamer} simulation for checkoff.
   \end{enumerate}
 \end{texexptitled}
@@ -500,12 +500,14 @@ Try it out on the FPGA and verify that you have control of your \verb|music_stre
 \section{Checkoff}
 \begin{enumerate}
   \item Show the RTL for the input conditioning circuits and music streamer
+  \item Show a waveform demonstrating no oscillation if the \verb|tone_switch_period| is 0
   \item Play an audio file generated from a simulation
   \item Demonstrate the music streamer on the FPGA (tempo control, reset)
+  \item Explain how the \verb|debouncer_testbench|, \verb|edge_detector_testbench|, and \verb|sync_testbench| work. Why do we use fork-join?
 \end{enumerate}
 
 \subsection{Lab Report}
-Submit a short report containing the waveform screenshots to answer the questions in the lab.
+No lab report for this lab!
 
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:
