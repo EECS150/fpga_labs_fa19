@@ -286,7 +286,7 @@ This test just runs the \verb|music_streamer| for a second.
 Run the test with \ttvar{make} \ttvar{sim/music_streamer_testbench.vpd} for VCS or \ttvar{make} \ttvar{sim/music_streamer_testbench.fst} for Icarus Verilog.
 
 Inspect the waveform and verify that there are no undefined signals (red lines/X).
-Run the Python script \verb|python3 scripts/audio_to_sim.py sim/output.txt| to generate a \verb|.wav| file and listen to the \verb|music_streamer|.
+Run the Python script \verb|python3 scripts/audio_from_sim.py sim/output.txt| to generate a \verb|.wav| file and listen to the \verb|music_streamer|.
 It should sound like the first second of the song that was loaded on the ROM.
 
 \subsection{Verify your Code Works For Rest Notes}

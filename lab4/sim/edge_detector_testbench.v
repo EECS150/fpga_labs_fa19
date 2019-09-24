@@ -31,7 +31,7 @@ module edge_detector_testbench();
         `endif
         // Set initial state, wait for a few clock cycles
         signal_in = 0;
-        repeat (10) @(posedge clk);
+        repeat (10) @(posedge clk); #1;
 
         fork
             // This thread provides the inputs for the edge detector
