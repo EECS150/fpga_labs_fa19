@@ -132,7 +132,7 @@ module echo_testbench();
         join
 
         repeat (100) @(posedge clk);
-        $display("%c/%h should have been sent and %c/%h echoed back", 8'h41, 8'h61);
+        $display("%h/%c should have been sent and %h/%c echoed back", 8'h41, 8'h41, 8'h61, 8'h61);
         `ifndef IVERILOG
             $vcdplusoff;
         `endif
