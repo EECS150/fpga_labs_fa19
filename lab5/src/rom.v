@@ -1,5 +1,5 @@
 module rom (input [9:0] address, output reg [23:0] data, output [9:0] last_address);
-  assign last_address = 456;
+  assign last_address = 250;
   always @ (*) begin
     case(address)
       10'd0: data = 24'd213310;
