@@ -73,28 +73,28 @@ module uart_testbench();
         data_in = 8'd0;
         data_in_valid = 1'b0;
         data_out_ready = 1'b0;
-        repeat (2) @(posedge clk);
+        repeat (2) @(posedge clk); #1;
 
         // Reset the UARTs
         reset = 1'b1;
-        @(posedge clk);
+        @(posedge clk); #1;
         reset = 1'b0;
 
         fork
             begin
                 // Wait until the off_chip_uart's transmitter is ready
-                while (data_in_ready == 1'b0) @(posedge clk);
+                while (data_in_ready == 1'b0) @(posedge clk); #1;
 
                 // Send a character to the off chip UART's transmitter to transmit over the serial line
                 data_in = 8'h21;
                 data_in_valid = 1'b1;
-                @(posedge clk);
+                @(posedge clk); #1;
                 data_in_valid = 1'b0;
 
                 // Now, the transmitter should be sending the data_in over the FPGA_SERIAL_TX line to the on chip UART
 
                 // We wait until the on chip UART's receiver indicates that is has valid data it has received
-                while (data_out_valid == 1'b0) @(posedge clk);
+                while (data_out_valid == 1'b0) @(posedge clk); #1;
 
                 // Now, data_out of the on chip UART should contain the data that was sent to it by the off chip UART
                 if (data_out !== 8'h21) begin
@@ -102,7 +102,7 @@ module uart_testbench();
                 end
 
                 // If we wait a few more clock cycles, the data should still be held by the receiver
-                repeat (10) @(posedge clk);
+                repeat (10) @(posedge clk); #1;
                 if (data_out !== 8'h21) begin
                     $display("Failure 2: on chip UART got correct data, but it didn't hold data_out until data_out_ready was asserted");
                 end
@@ -114,15 +114,16 @@ module uart_testbench();
 
                 // Now, if we assert data_out_ready to the on chip UART's receiver, it should pull its data_out_valid signal low
                 data_out_ready = 1'b1;
-                @(posedge clk);
+                @(posedge clk); #1;
                 data_out_ready = 1'b0;
-                @(posedge clk);
+                @(posedge clk); #1;
                 if (data_out_valid == 1'b1) begin
                     $display("Failure 4: on chip UART didn't clear data_out_valid when data_out_ready was asserted");
                 end
+                done = 1;
             end
             begin
-                repeat (125000) @(posedge clk);
+                repeat (25000) @(posedge clk);
                 if (!done) begin
                     $display("Failure: timing out");
                     $finish();

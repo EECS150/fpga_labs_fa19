@@ -79,11 +79,11 @@ module echo_testbench();
         data_in = 8'h41; // Represents the character 'A' in ASCII
         data_in_valid = 1'b0;
         data_out_ready = 1'b0;
-        repeat (2) @(posedge clk);
+        repeat (2) @(posedge clk); #1;
 
         // Pulse the reset signal long enough to be detected by the debouncer in z1top
         reset = 1'b1;
-        repeat (40) @(posedge clk);
+        repeat (40) @(posedge clk); #1;
         reset = 1'b0;
 
         //Reset on FPGA should occur on positive edge of reset for 1 cycle
@@ -91,34 +91,34 @@ module echo_testbench();
         fork
             begin
                 // Wait until the off-chip UART transmitter is ready to transmit
-                while (!data_in_ready) @(posedge clk);
+                while (!data_in_ready) @(posedge clk); #1;
 
                 // Once the off-chip UART transmitter is ready, pulse data_in_valid to tell it that
                 // we have valid data that we want it to send over the serial line
                 // Will set this on negedge to make semantics more clear
-                @(negedge clk);
+                @(negedge clk); #1;
                 data_in_valid = 1'b1;
-                @(negedge clk);
+                @(negedge clk); #1;
                 data_in_valid = 1'b0;
                 $display("off-chip UART about to transmit: %h/%c to the on-chip UART", data_in, data_in);
 
                 // Now the off-chip UART transmitter should be sending the data across FPGA_SERIAL_RX
 
                 // Once all the data reaches the on-chip UART, it should set top/on_chip_uart/data_out_valid high
-                while (!top.on_chip_uart.data_out_valid) @(posedge clk);
+                while (!top.on_chip_uart.data_out_valid) @(posedge clk); #1;
                 $display("on-chip UART received: %h from the off-chip UART", top.on_chip_uart.data_out);
 
                 // Then the state machine in z1top should pulse top/on_chip_uart/data_out_ready high and send the data
                 // it received back through the on-chip UART transmitter.
-                while (!top.on_chip_uart.data_in_valid) @(posedge clk);
+                while (!top.on_chip_uart.data_in_valid) @(posedge clk); #1;
                 $display("on-chip UART about to transmit: %h to the off-chip UART", top.on_chip_uart.data_in);
 
                 // Finally, when the data is echoed back to the off-chip UART, data_out_valid should go high. Now is when
                 // the off chip UART can read the data it received and print it out to the user
-                while (!data_out_valid) @(posedge clk);
+                while (!data_out_valid) @(posedge clk); #1;
                 $display("off-chip UART received: %h/%c from on-chip UART", data_out, data_out);
                 data_out_ready = 1'b1;
-                @(posedge clk);
+                @(posedge clk); #1;
                 data_out_ready = 1'b0;
                 done = 1;
             end
