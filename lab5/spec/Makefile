@@ -20,7 +20,7 @@
 
 srcdir  = .
 
-main = lab4_spec
+main = lab5_spec
 srcs = $(wildcard *.tex)
 figs = $(wildcard figs/*)
 bibs =
