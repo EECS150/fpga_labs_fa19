@@ -279,12 +279,12 @@ We have provided this for you. The provided \verb|src/z1top.v| contains a very s
 
 Check using the provided \verb|echo_testbench.v| testbench that everything works as it should in simulation.
 This testbench is commented to help you understand the communication between the 2 UARTs and the communication over the ready/valid interface.
-The file often refers to the UART on the workstation as the off-chip UART and the UART on the FPGA as the on-chip UART.
+The test often refers to the UART on the workstation as the off-chip UART and the UART on the FPGA as the on-chip UART.
 
 \subsection{PMOD USB-UART}
 The Pynq-Z1 does not have an RS-232 serial interface connected to the FPGA fabric.
-So we'll be using the \href{https://store.digilentinc.com/pmod-usbuart-usb-to-uart-interface/}{Pmod USBUART} extension module to add a USB-UART interface to the Pynq.
-Connect the PMOD module to the bottom row of the PMOD A port on the Pynq.
+So we'll be using the \href{https://store.digilentinc.com/pmod-usbuart-usb-to-uart-interface/}{Pmod USB-UART} extension module to add a UART interface to the Pynq.
+Connect the PMOD module to the \textbf{top} row of the PMOD A port on the Pynq, and connect a USB cable from the USB-UART PMOD to your computer.
 
 %Well, ok, it does, kind of. The USB interface you use for programming the board (and for RS-232 communication with the board's ARM-based system) is actually only connected to the Processor Subsystem, not the Programmable Logic. We can't use it from our design directly. So, we need to add a serial interface: this is usually a chip wired to connect a device as a serial host/client to another device, with appropriate voltage level shifting to meet the electrical specification (e.g. RS-232). Before you can continue, therefore, you must upgrade your Pynq-Z1 with one: the \href{https://store.digilentinc.com/pmod-usbuart-usb-to-uart-interface/}{Pmod USBUART} is available for you in this lab. (The \href{https://store.digilentinc.com/pmod-rs232-serial-converter-and-interface-standard/}{Pmod RS232} is another module you could use, but it doesn't take care of framing your data in the USB protocol for you.)
 
@@ -309,19 +309,16 @@ Warnings about ``multi driven nets'', for example, can mean that certain logic p
 If you get stuck, it will help to structure your Verilog as a state machine in a very similar way to the provided \verb|uart_receiver.v|.
 
 \subsection{Hello, world!}
-
-Now, make sure the USB serial cable is plugged in between the Pynq-Z1 board and your workstation and then run:
+Now, make sure a USB cable is plugged in between the PMOD module and your workstation and then run:
 
 \begin{minted}{bash}
 screen $SERIALTTY 115200
 \end{minted}
 
-This tells \verb|screen|, a terminal emulator, to open up the serial device with a baud rate of 115200 (you might have to run as \verb|root|).
+This tells \verb|screen|, a terminal emulator, to open up the serial device with a baud rate of 115200 (you might have to run this with \verb|sudo| on your laptop).
 When you type a character into the terminal, it is sent to the FPGA over the \verb|FPGA_SERIAL_RX| line, encoded in ASCII.
 The state machine in \verb|z1top| may modify the character you sent it and will then push a new character over the \verb|FPGA_SERIAL_TX| line to your workstation.
 When \verb|screen| receives a character, it will display it in the terminal.
-
-You can find which \verb|$SERIALTTY| to connect to by perusing the output of the \verb|dmesg| command (in Linux) or checking the Device Manager (in Windows).
 
 If you have a working design, you can type a few characters into the terminal and have them echoed to you (with inverted case if you type letters).
 Make sure that if you type really fast that all characters still display properly.
@@ -337,11 +334,27 @@ Then run \verb|screen| again.
 
 Use \verb|screen -r| to re-attach to a non-terminated screen session. You can also reboot the computer to clear all active \verb|screen| sessions.
 
+\subsection{Personal Laptop Instructions}
+
+\subsubsection{Linux/OSX}
+After plugging in the USB cable, run \verb|dmesg| and observe the output:
+\begin{minted}{text}
+[7444636.941491] ftdi_sio 1-2:1.0: FTDI USB Serial Device converter detected
+[7444636.941621] usb 1-2: Detected FT232RL
+[7444636.942062] usb 1-2: FTDI USB Serial Device converter now attached to ttyUSB0
+\end{minted}
+
+Then connect using \verb|sudo screen /dev/ttyUSB0 115200|
+
+\subsubsection{Windows}
+After plugging in the USB cable, you may be prompted to install the FTDI drivers, so do that.
+Follow the \href{https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842446/Setup+a+Serial+Console}{steps from here} to use PuTTY to connect to the UART.
+
 \section{Checkoff}
 \begin{enumerate}
     \item Demonstrate the music streamer on the FPGA (FSM with play, pause, and reverse play / tempo control / reset)
-    \item Go through the simulation results and show that your UART behaves as expected
-    \item Demonstrate you can type characters on the keyboard and have them echoed back in your \verb|screen| session
+    \item Go through the UART simulation results and show that your UART behaves as expected. What do the testbenches do?
+    \item Demonstrate that you can type characters rapidly on the keyboard and have them echoed back in your \verb|screen| session
 \end{enumerate}
 
 \subsection{Lab Report}
