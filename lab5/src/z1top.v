@@ -23,8 +23,6 @@ module z1top #(
     assign aud_sd = 1; // Enable the audio output
     assign aud_pwm = 0;
 
-    //// TODO: Instantiate the tone_generator and music_streamer here from lab 4
-
     wire [3:0] buttons_pressed;
     wire reset;
     assign reset = buttons_pressed[0];
@@ -37,6 +35,8 @@ module z1top #(
         .in(BUTTONS),
         .out(buttons_pressed)
     );
+
+    //// TODO: Instantiate the tone_generator and music_streamer here from lab 4
 
     reg [7:0] data_in;
     wire [7:0] data_out;
