@@ -1,5 +1,3 @@
-`include "util.vh"
-
 module uart_transmitter #(
     parameter CLOCK_FREQ = 125_000_000,
     parameter BAUD_RATE = 115_200)
@@ -15,7 +13,7 @@ module uart_transmitter #(
 );
     // See diagram in the lab guide
     localparam  SYMBOL_EDGE_TIME    =   CLOCK_FREQ / BAUD_RATE;
-    localparam  CLOCK_COUNTER_WIDTH =   `log2(SYMBOL_EDGE_TIME);
+    localparam  CLOCK_COUNTER_WIDTH =   $clog2(SYMBOL_EDGE_TIME);
 
     // Remove these assignments when implementing this module
     assign serial_out = 1'b0;

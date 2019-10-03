@@ -1,5 +1,3 @@
-`include "util.vh"
-
 module uart_receiver #(
     parameter CLOCK_FREQ = 125_000_000,
     parameter BAUD_RATE = 115_200)
@@ -16,7 +14,7 @@ module uart_receiver #(
     // See diagram in the lab guide
     localparam SYMBOL_EDGE_TIME = CLOCK_FREQ / BAUD_RATE;
     localparam SAMPLE_TIME = SYMBOL_EDGE_TIME / 2;
-    localparam CLOCK_COUNTER_WIDTH= `log2(SYMBOL_EDGE_TIME);
+    localparam CLOCK_COUNTER_WIDTH= $clog2(SYMBOL_EDGE_TIME);
 
     wire symbol_edge;
     wire sample;
