@@ -277,27 +277,34 @@ We have provided this for you. The provided \verb|src/z1top.v| contains a very s
   \item The possibly modified character is sent to the \verb|uart_transmitter| using ready/valid to be sent over the serial line one bit at a time
 \end{itemize}
 
-Check using the provided \verb|echo_testbench.v| testbench that everything works as it should in simulation. This testbench is heavily commented to help you understand the communication between the 2 UARTs and the communication over the ready/valid interface. The file often refers to the UART on the workstation as the off-chip UART and the UART on the FPGA as the on-chip UART.
+Check using the provided \verb|echo_testbench.v| testbench that everything works as it should in simulation.
+This testbench is commented to help you understand the communication between the 2 UARTs and the communication over the ready/valid interface.
+The file often refers to the UART on the workstation as the off-chip UART and the UART on the FPGA as the on-chip UART.
 
-\subsection{PMOD serial interface}
-The Pynq-Z1 does not have an RS-232 serial interface! Well, ok, it does, kind of. The USB interface you use for programming the board (and for RS-232 communication with the board's ARM-based system) is actually only connected to the Processor Subsystem, not the Programmable Logic. We can't use it from our design directly. So, we need to add a serial interface: this is usually a chip wired to connect a device as a serial host/client to another device, with appropriate voltage level shifting to meet the electrical specification (e.g. RS-232). Before you can continue, therefore, you must upgrade your Pynq-Z1 with one: the \href{https://store.digilentinc.com/pmod-usbuart-usb-to-uart-interface/}{Pmod USBUART} is available for you in this lab. (The \href{https://store.digilentinc.com/pmod-rs232-serial-converter-and-interface-standard/}{Pmod RS232} is another module you could use, but it doesn't take care of framing your data in the USB protocol for you.)
+\subsection{PMOD USB-UART}
+The Pynq-Z1 does not have an RS-232 serial interface connected to the FPGA fabric.
+So we'll be using the \href{https://store.digilentinc.com/pmod-usbuart-usb-to-uart-interface/}{Pmod USBUART} extension module to add a USB-UART interface to the Pynq.
+Connect the PMOD module to the bottom row of the PMOD A port on the Pynq.
 
-Have a read over the \href{https://reference.digilentinc.com/reference/pmod/pmodusbuart/reference-manual}{Pmod USBUART Reference Manual} (\verb|resources/pmodusbuart_rm.pdf|). You might agree that mapping the pin on the Zynq chip to a PMOD port, then to the right pin on the PMOD header, then to the right pin on the transceiver chip, can be quite confusing. See if you can work it out. Here's a little help:
+%Well, ok, it does, kind of. The USB interface you use for programming the board (and for RS-232 communication with the board's ARM-based system) is actually only connected to the Processor Subsystem, not the Programmable Logic. We can't use it from our design directly. So, we need to add a serial interface: this is usually a chip wired to connect a device as a serial host/client to another device, with appropriate voltage level shifting to meet the electrical specification (e.g. RS-232). Before you can continue, therefore, you must upgrade your Pynq-Z1 with one: the \href{https://store.digilentinc.com/pmod-usbuart-usb-to-uart-interface/}{Pmod USBUART} is available for you in this lab. (The \href{https://store.digilentinc.com/pmod-rs232-serial-converter-and-interface-standard/}{Pmod RS232} is another module you could use, but it doesn't take care of framing your data in the USB protocol for you.)
 
-\begin{itemize}
-  \item Connect \verb|FPGA_SERIAL_TX| in your design to the Pmod USBUART's \verb|RXD| pin (PMOD header pin 2).
-  \item Connect \verb|FPGA_SERIAL_RX| in your design to the Pmod USBUART's \verb|TXD| pin (PMOD header pin 3).
-\end{itemize}
+%Have a read over the \href{https://reference.digilentinc.com/reference/pmod/pmodusbuart/reference-manual}{Pmod USBUART Reference Manual} (\verb|resources/pmodusbuart_rm.pdf|). You might agree that mapping the pin on the Zynq chip to a PMOD port, then to the right pin on the PMOD header, then to the right pin on the transceiver chip, can be quite confusing. See if you can work it out. Here's a little help:
 
-\textbf{What do RTS and CTS do?} Respectively \underline{R}equest to \underline{S}end and \underline{C}lear to \underline{S}end, these signals are used for hardware flow control. We will ignore them, so make sure to disable hardware flow control in the software you use to connect to your board (or more likely, make sure not to enable it by accident).
+%\begin{itemize}
+  %\item Connect \verb|FPGA_SERIAL_TX| in your design to the Pmod USBUART's \verb|RXD| pin (PMOD header pin 2).
+  %\item Connect \verb|FPGA_SERIAL_RX| in your design to the Pmod USBUART's \verb|TXD| pin (PMOD header pin 3).
+%\end{itemize}
 
-\textbf{Note:} Make sure that the power selection jumper on the Pmod USBUART is set to LCL3V3 - as you'll read in the reference manual, this is because we're powered the system from an external source and \emph{not} through the tiny USB interface chip on the PMOD module.
+%\textbf{What do RTS and CTS do?} Respectively \underline{R}equest to \underline{S}end and \underline{C}lear to \underline{S}end, these signals are used for hardware flow control. We will ignore them, so make sure to disable hardware flow control in the software you use to connect to your board (or more likely, make sure not to enable it by accident).
+
+\textbf{Note:} Make sure that the power selection jumper on the Pmod USBUART is set to LCL3V3% - as you'll read in the reference manual, this is because we're powered the system from an external source and \emph{not} through the tiny USB interface chip on the PMOD module.
 
 \subsection{Implement your design}
-
 Synthesize your design and generate the bitstream, then program the board just like you have done in previous labs.
 
-\textbf{Pay attention to the warnings} generated by the tool chain. Again, it's possible to write your Verilog in such a way that it passes behavioural simulation but doesn't work in implementation. Warnings about ``multi driven nets'', for example, can mean that certain logic pathways are never implemented on chip.
+\textbf{Pay attention to the warnings} generated by the tool chain in \ttvar{build/synth/synth.log}.
+It's possible to write your Verilog in such a way that it passes behavioural simulation but doesn't work in implementation.
+Warnings about ``multi driven nets'', for example, can mean that certain logic pathways are never implemented on chip.
 
 If you get stuck, it will help to structure your Verilog as a state machine in a very similar way to the provided \verb|uart_receiver.v|.
 
@@ -309,32 +316,36 @@ Now, make sure the USB serial cable is plugged in between the Pynq-Z1 board and 
 screen $SERIALTTY 115200
 \end{minted}
 
-This tells \verb|screen|, a highly versatile terminal emulator, to open up the serial device with a baud rate of 115200 (you might have to run as \verb|root|). When you type a character into the terminal, it is sent to the FPGA over the \verb|FPGA_SERIAL_RX| line, encoded in ASCII. The state machine in \verb|z1top| may modify the character you sent it and will then push a new character over the \verb|FPGA_SERIAL_TX| line to your workstation. When \verb|screen| receives a character, it will display it in the terminal.
+This tells \verb|screen|, a terminal emulator, to open up the serial device with a baud rate of 115200 (you might have to run as \verb|root|).
+When you type a character into the terminal, it is sent to the FPGA over the \verb|FPGA_SERIAL_RX| line, encoded in ASCII.
+The state machine in \verb|z1top| may modify the character you sent it and will then push a new character over the \verb|FPGA_SERIAL_TX| line to your workstation.
+When \verb|screen| receives a character, it will display it in the terminal.
 
 You can find which \verb|$SERIALTTY| to connect to by perusing the output of the \verb|dmesg| command (in Linux) or checking the Device Manager (in Windows).
 
-Now, if you have a properly working design, you should be able to tap a few characters into the terminal and have them echoed to you (with inverted case if you type letters). Make sure that if you type really fast that all characters still display properly. If you see some weird garbage symbols then the data is getting corrupted and something is likely wrong. If you see this happening very infrequently, don't just hope that it won't happen while the TA is doing the checkoff; take the time now to figure out what is wrong. UART bugs are a common source of headaches for groups during the first project checkpoint.
+If you have a working design, you can type a few characters into the terminal and have them echoed to you (with inverted case if you type letters).
+Make sure that if you type really fast that all characters still display properly.
+If you see some weird garbage symbols then the data is getting corrupted and something is likely wrong.
+If you see this happening very infrequently, don't just hope that it won't happen while the TA is doing the checkoff; take the time now to figure out what is wrong.
+UART bugs are a common source of headaches for groups during the first project checkpoint.
 
-To close \verb|screen|, type \verb|Ctrl-a| then \verb|Shift-k| and answer \verb|y| to the confirmation prompt. If you don't close screen properly, other students won't be able to access the serial port. If you try opening \verb|screen| and it terminates after a few seconds with an error saying ``Sorry, can't find a PTY'' or ``Device is busy'', execute the command \verb|killscreen| which will kill all open screen sessions that other students may have left open. Then run \verb|screen| again.
+To close \verb|screen|, type \verb|Ctrl-a| then \verb|Shift-k| and answer \verb|y| to the confirmation prompt.
+If you don't close screen properly, other students won't be able to access the serial port on your workstation.
+
+If you try opening \verb|screen| and it terminates after a few seconds with an error saying ``Sorry, can't find a PTY'' or ``Device is busy'', execute the command \verb|killscreen| which will kill all open screen sessions that other students may have left open.
+Then run \verb|screen| again.
 
 Use \verb|screen -r| to re-attach to a non-terminated screen session. You can also reboot the computer to clear all active \verb|screen| sessions.
 
-\subsection{Checkoff}
-\begin{enumerate}
-    \item Walk your TA through the simulation results and show that your UART behaves as expected.
-    \item Show your TA that you can successfully type characters on the keyboard and have them echoed back to display on your \verb|screen| session.
-    \item Demonstrate to your TA that your I\textsuperscript{2}S clocks waveforms match the requirements in the reference manual.
-\end{enumerate}
-
 \section{Checkoff}
 \begin{enumerate}
-  \item Show the RTL for the input conditioning circuits and music streamer
-  \item Play an audio file generated from a simulation
-  \item Demonstrate the music streamer on the FPGA (FSM, tempo control, reset)
+    \item Demonstrate the music streamer on the FPGA (FSM with play, pause, and reverse play / tempo control / reset)
+    \item Go through the simulation results and show that your UART behaves as expected
+    \item Demonstrate you can type characters on the keyboard and have them echoed back in your \verb|screen| session
 \end{enumerate}
 
 \subsection{Lab Report}
-Submit a short report containing the waveform screenshots to answer the questions in the lab.
+No lab report!
 
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:

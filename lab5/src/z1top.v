@@ -3,10 +3,12 @@
 module z1top #(
     parameter CLOCK_FREQ = 125_000_000,
     parameter BAUD_RATE = 115_200,
+    /* verilator lint_off REALCVT */
     // Sample the button signal every 500us
     parameter integer B_SAMPLE_COUNT_MAX = 0.0005 * CLOCK_FREQ,
     // The button is considered 'pressed' after 100ms of continuous pressing
     parameter integer B_PULSE_COUNT_MAX = 0.100 / 0.0005
+    /* lint_on */
 ) (
     input CLK_125MHZ_FPGA,
     input [3:0] BUTTONS,

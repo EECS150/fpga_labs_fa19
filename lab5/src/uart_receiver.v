@@ -29,10 +29,14 @@ module uart_receiver #(
     //--|Signal Assignments|------------------------------------------------------
 
     // Goes high at every symbol edge
+    /* verilator lint_off WIDTH */
     assign symbol_edge = clock_counter == (SYMBOL_EDGE_TIME - 1);
+    /* lint_on */
 
     // Goes high halfway through each symbol
+    /* verilator lint_off WIDTH */
     assign sample = clock_counter == SAMPLE_TIME;
+    /* lint_on */
 
     // Goes high when it is time to start receiving a new character
     assign start = !serial_in && !rx_running;
