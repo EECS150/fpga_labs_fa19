@@ -19,9 +19,8 @@ module z1top #(
     input FPGA_SERIAL_RX,
     output FPGA_SERIAL_TX
 );
-    assign LEDS[5:4] = 2'b11;
+    assign LEDS[5:0] = 6'b11_0001;
     assign aud_sd = 1; // Enable the audio output
-    assign aud_pwm = 0;
 
     wire [3:0] buttons_pressed;
     wire reset;
@@ -37,6 +36,7 @@ module z1top #(
     );
 
     //// TODO: Instantiate the tone_generator and music_streamer here from lab 4
+    assign aud_pwm = 0; // Comment this out when ready
 
     reg [7:0] data_in;
     wire [7:0] data_out;
