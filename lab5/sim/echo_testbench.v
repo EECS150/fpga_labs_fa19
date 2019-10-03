@@ -3,8 +3,8 @@
 `define CLOCK_PERIOD 8
 `define CLOCK_FREQ 125_000_000
 `define BAUD_RATE 115_200
-`define B_SAMPLE_COUNT_MAX 1
-`define B_PULSE_COUNT_MAX 1
+`define B_SAMPLE_COUNT_MAX 4
+`define B_PULSE_COUNT_MAX 4
 
 /*
     This is a system level testbench that instantiates z1top (the FPGA design) and an off-chip UART which communicates
@@ -24,19 +24,18 @@ module echo_testbench();
     // I/O of z1top
     wire FPGA_SERIAL_RX, FPGA_SERIAL_TX;
     reg reset;
-    
+
     wire [5:0] leds;
     // Our FPGA design
     z1top #(
         .CLOCK_FREQ(`CLOCK_FREQ),
         .BAUD_RATE(`BAUD_RATE),
-        .B_SAMPLE_COUNT_MAX(4),
-        .B_PULSE_COUNT_MAX(4)
+        .B_SAMPLE_COUNT_MAX(`B_SAMPLE_COUNT_MAX),
+        .B_PULSE_COUNT_MAX(`B_SAMPLE_COUNT_MAX)
     ) top (
         .CLK_125MHZ_FPGA(clk),
-        .BUTTONS(3'd0),
+        .BUTTONS({3'd0, reset}),
         .SWITCHES(2'd0),
-        .RESET(reset),
         .LEDS(leds),
         .FPGA_SERIAL_RX(FPGA_SERIAL_RX),
         .FPGA_SERIAL_TX(FPGA_SERIAL_TX)
@@ -67,7 +66,15 @@ module echo_testbench();
         .serial_out(FPGA_SERIAL_RX)
     );
 
+    reg done = 0;
     initial begin
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
+        `ifdef IVERILOG
+            $dumpfile("echo_testbench.fst");
+            $dumpvars(0,echo_testbench);
+        `endif
         reset = 1'b0;
         data_in = 8'h41; // Represents the character 'A' in ASCII
         data_in_valid = 1'b0;
@@ -78,44 +85,57 @@ module echo_testbench();
         reset = 1'b1;
         repeat (40) @(posedge clk);
         reset = 1'b0;
-        
-	//Reset on FPGA should occur on positive edge of reset for 1 cycle
 
-        // Wait until the off-chip UART transmitter is ready to transmit
-        while (!data_in_ready) @(posedge clk);
+        //Reset on FPGA should occur on positive edge of reset for 1 cycle
 
-        // Once the off-chip UART transmitter is ready, pulse data_in_valid to tell it that
-        // we have valid data that we want it to send over the serial line
-        //Will set this on negedge to make semantics more clear
-        @(negedge clk);
-        data_in_valid = 1'b1;
-        //@(posedge clk);
-        @(negedge clk);
-        data_in_valid = 1'b0;
-        $display("off-chip UART about to transmit: %h to the on-chip UART", data_in);
+        fork
+            begin
+                // Wait until the off-chip UART transmitter is ready to transmit
+                while (!data_in_ready) @(posedge clk);
 
-        // Now the off-chip UART transmitter should be sending the data across FPGA_SERIAL_RX
+                // Once the off-chip UART transmitter is ready, pulse data_in_valid to tell it that
+                // we have valid data that we want it to send over the serial line
+                // Will set this on negedge to make semantics more clear
+                @(negedge clk);
+                data_in_valid = 1'b1;
+                @(negedge clk);
+                data_in_valid = 1'b0;
+                $display("off-chip UART about to transmit: %h/%c to the on-chip UART", data_in, data_in);
 
-        // Once all the data reaches the on-chip UART, it should set top/on_chip_uart/data_out_valid high
-        while (!top.on_chip_uart.data_out_valid) @(posedge clk);
-        $display("on-chip UART received: %h from the off-chip UART", top.on_chip_uart.data_out);
+                // Now the off-chip UART transmitter should be sending the data across FPGA_SERIAL_RX
 
-        // Then the state machine in z1top should pulse top/on_chip_uart/data_out_ready high and send the data
-        // it received back through the on-chip UART transmitter.
-        while (!top.on_chip_uart.data_in_valid) @(posedge clk);
-        $display("on-chip UART about to transmit: %h to the off-chip UART", top.on_chip_uart.data_in);
+                // Once all the data reaches the on-chip UART, it should set top/on_chip_uart/data_out_valid high
+                while (!top.on_chip_uart.data_out_valid) @(posedge clk);
+                $display("on-chip UART received: %h from the off-chip UART", top.on_chip_uart.data_out);
 
-        // Finally, when the data is echoed back to the off-chip UART, data_out_valid should go high. Now is when
-        // the off chip UART can read the data it received and print it out to the user
-        while (!data_out_valid) @(posedge clk);
-        $display("off-chip UART received: %h from on-chip UART", data_out);
-        data_out_ready = 1'b1;
-        @(posedge clk);
-        data_out_ready = 1'b0;
+                // Then the state machine in z1top should pulse top/on_chip_uart/data_out_ready high and send the data
+                // it received back through the on-chip UART transmitter.
+                while (!top.on_chip_uart.data_in_valid) @(posedge clk);
+                $display("on-chip UART about to transmit: %h to the off-chip UART", top.on_chip_uart.data_in);
 
-        // We are done! Let time elapse.
+                // Finally, when the data is echoed back to the off-chip UART, data_out_valid should go high. Now is when
+                // the off chip UART can read the data it received and print it out to the user
+                while (!data_out_valid) @(posedge clk);
+                $display("off-chip UART received: %h/%c from on-chip UART", data_out, data_out);
+                data_out_ready = 1'b1;
+                @(posedge clk);
+                data_out_ready = 1'b0;
+                done = 1;
+            end
+            begin
+                repeat (125000) @(posedge clk);
+                if (!done) begin
+                    $display("Failure: timing out");
+                    $finish();
+                end
+            end
+        join
+
         repeat (100) @(posedge clk);
-        $display("%h should have been sent and %h echoed back", 8'h41, 8'h61);
+        $display("%c/%h should have been sent and %c/%h echoed back", 8'h41, 8'h61);
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
         $finish();
     end
 endmodule

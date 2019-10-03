@@ -28,8 +28,8 @@ module music_streamer_testbench();
     tone_generator tg (
         .clk(clock),
         .rst(reset),
-        .output_enable(1),
-        .volume(1),
+        .output_enable(1'b1),
+        .volume(1'b1),
         .tone_switch_period(tone_to_play),
         .square_wave_out(sq_wave)
     );
@@ -60,7 +60,7 @@ module music_streamer_testbench();
 
         // Warning: do not exceed delays of 2 seconds at a time
         // otherwise the delay won't work properly with our simulator
-        #(1 * `SECOND);
+        #(20 * `MS);
 
         /*
         // Get FSM into PAUSED state by simulating button press

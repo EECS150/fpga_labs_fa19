@@ -9,3 +9,8 @@
 *.str
 *.toc
 build
+*.fst
+*.tbi
+*.vpd
+*.tb
+output.txt

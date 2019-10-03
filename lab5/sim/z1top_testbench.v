@@ -3,11 +3,14 @@
 `define SECOND 1000000000
 `define MS 1000000
 `define CLOCKS_PER_SAMPLE 2500 // 125 Mhz clock, 50 kHz audio, 2500 clocks per sample
+`define B_SAMPLE_COUNT_MAX 4
+`define B_PULSE_COUNT_MAX 4
+`define CLOCK_PERIOD 8
+`define CLOCK_FREQ 125_000_000
 
 module z1top_testbench();
-    reg clock;
-    initial clock = 0;
-    always #(4) clock <= ~clock;
+    reg clk = 0;
+    always #(`CLOCK_PERIOD/2) clk <= ~clk;
 
     wire aud_pwm, aud_sd, speaker;
     wire [5:0] leds;
@@ -15,8 +18,12 @@ module z1top_testbench();
     reg [1:0] switches = 2'b00;
     assign speaker = aud_pwm & aud_sd;
 
-    z1top top (
-        .CLK_125MHZ_FPGA(clock),
+    z1top #(
+        .CLOCK_FREQ(`CLOCK_FREQ),
+        .B_SAMPLE_COUNT_MAX(`B_SAMPLE_COUNT_MAX),
+        .B_PULSE_COUNT_MAX(`B_PULSE_COUNT_MAX)
+    ) top (
+        .CLK_125MHZ_FPGA(clk),
         .BUTTONS(buttons),
         .SWITCHES(switches),
         .LEDS(leds),
@@ -29,8 +36,13 @@ module z1top_testbench();
             $dumpfile("z1top_testbench.fst");
             $dumpvars(0,z1top_testbench);
         `endif
+        buttons[0] = 1'b0;
+        repeat (10) @(posedge clk);
+        buttons[0] = 1'b1;
+        repeat (40) @(posedge clk);
+        buttons[0] = 1'b0;
 
-        #(200 * `MS);
+        #(20 * `MS);
         $finish();
     end
 
@@ -45,7 +57,7 @@ module z1top_testbench();
         forever begin
             count = 0;
             for (i = 0; i < `CLOCKS_PER_SAMPLE; i = i + 1) begin
-                @(posedge clock);
+                @(posedge clk);
                 count = count + speaker;
             end
             $fwrite(file, "%d\n", count);

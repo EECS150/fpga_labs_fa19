@@ -60,7 +60,15 @@ module uart_testbench();
         .serial_out(FPGA_SERIAL_RX)
     );
 
+    reg done = 0;
     initial begin
+        `ifdef IVERILOG
+            $dumpfile("uart_testbench.fst");
+            $dumpvars(0,uart_testbench);
+        `endif
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
         reset = 1'b0;
         data_in = 8'd0;
         data_in_valid = 1'b0;
@@ -72,51 +80,61 @@ module uart_testbench();
         @(posedge clk);
         reset = 1'b0;
 
-        // Wait until the off_chip_uart's transmitter is ready
-        while (data_in_ready == 1'b0) @(posedge clk);
+        fork
+            begin
+                // Wait until the off_chip_uart's transmitter is ready
+                while (data_in_ready == 1'b0) @(posedge clk);
 
-        // Send a character to the off chip UART's transmitter to transmit over the serial line
-        data_in = 8'h21;
-        data_in_valid = 1'b1;
-        @(posedge clk);
-        data_in_valid = 1'b0;
+                // Send a character to the off chip UART's transmitter to transmit over the serial line
+                data_in = 8'h21;
+                data_in_valid = 1'b1;
+                @(posedge clk);
+                data_in_valid = 1'b0;
 
-        // Now, the transmitter should be sending the data_in over the FPGA_SERIAL_TX line to the on chip UART
+                // Now, the transmitter should be sending the data_in over the FPGA_SERIAL_TX line to the on chip UART
 
-        // We wait until the on chip UART's receiver indicates that is has valid data it has received
-        while (data_out_valid == 1'b0) @(posedge clk);
+                // We wait until the on chip UART's receiver indicates that is has valid data it has received
+                while (data_out_valid == 1'b0) @(posedge clk);
 
-        // Now, data_out of the on chip UART should contain the data that was sent to it by the off chip UART
-        if (data_out !== 8'h21) begin
-            $display("Failure 1: on chip UART got data: %h, but expected: %h", data_out, 8'h21);
-            $finish();
-        end
+                // Now, data_out of the on chip UART should contain the data that was sent to it by the off chip UART
+                if (data_out !== 8'h21) begin
+                    $display("Failure 1: on chip UART got data: %h, but expected: %h", data_out, 8'h21);
+                end
 
-        // If we wait a few more clock cycles, the data should still be held by the receiver
-        repeat (10) @(posedge clk);
-        if (data_out !== 8'h21) begin
-            $display("Failure 2: on chip UART got correct data, but it didn't hold data_out until data_out_ready was asserted");
-            $finish();
-        end
+                // If we wait a few more clock cycles, the data should still be held by the receiver
+                repeat (10) @(posedge clk);
+                if (data_out !== 8'h21) begin
+                    $display("Failure 2: on chip UART got correct data, but it didn't hold data_out until data_out_ready was asserted");
+                end
 
-        // At this point, the off chip UART's transmitter should be idle and the FPGA_SERIAL_TX line should be in the idle state
-        if (FPGA_SERIAL_TX !== 1'b1) begin
-            $display("Failure 3: FPGA_SERIAL_TX was not high when the off chip UART's transmitter should be idle");
-            $finish();
-        end
+                // At this point, the off chip UART's transmitter should be idle and the FPGA_SERIAL_TX line should be in the idle state
+                if (FPGA_SERIAL_TX !== 1'b1) begin
+                    $display("Failure 3: FPGA_SERIAL_TX was not high when the off chip UART's transmitter should be idle");
+                end
 
-        // Now, if we assert data_out_ready to the on chip UART's receiver, it should pull its data_out_valid signal low
-        data_out_ready = 1'b1;
-        @(posedge clk);
-        data_out_ready = 1'b0;
-        @(posedge clk);
-        if (data_out_valid == 1'b1) begin
-            $display("Failure 4: on chip UART didn't clear data_out_valid when data_out_ready was asserted");
-            $finish();
-        end
+                // Now, if we assert data_out_ready to the on chip UART's receiver, it should pull its data_out_valid signal low
+                data_out_ready = 1'b1;
+                @(posedge clk);
+                data_out_ready = 1'b0;
+                @(posedge clk);
+                if (data_out_valid == 1'b1) begin
+                    $display("Failure 4: on chip UART didn't clear data_out_valid when data_out_ready was asserted");
+                end
+            end
+            begin
+                repeat (125000) @(posedge clk);
+                if (!done) begin
+                    $display("Failure: timing out");
+                    $finish();
+                end
+            end
+        join
 
         repeat (20) @(posedge clk);
         $display("Test Successful");
+        `ifndef IVERILOG
+            $vcdplusoff;
+        `endif
         $finish();
     end
 endmodule
