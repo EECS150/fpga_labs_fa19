@@ -123,7 +123,7 @@ module echo_testbench();
                 done = 1;
             end
             begin
-                repeat (125000) @(posedge clk);
+                repeat (35000) @(posedge clk);
                 if (!done) begin
                     $display("Failure: timing out");
                     $finish();
