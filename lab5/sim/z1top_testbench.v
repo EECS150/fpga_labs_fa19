@@ -3,8 +3,8 @@
 `define SECOND 1000000000
 `define MS 1000000
 `define CLOCKS_PER_SAMPLE 2500 // 125 Mhz clock, 50 kHz audio, 2500 clocks per sample
-`define B_SAMPLE_COUNT_MAX 4
-`define B_PULSE_COUNT_MAX 4
+`define B_SAMPLE_COUNT_MAX 5
+`define B_PULSE_COUNT_MAX 5
 `define CLOCK_PERIOD 8
 `define CLOCK_FREQ 125_000_000
 

@@ -3,8 +3,8 @@
 `define CLOCK_PERIOD 8
 `define CLOCK_FREQ 125_000_000
 `define BAUD_RATE 115_200
-`define B_SAMPLE_COUNT_MAX 4
-`define B_PULSE_COUNT_MAX 4
+`define B_SAMPLE_COUNT_MAX 5
+`define B_PULSE_COUNT_MAX 5
 
 /*
     This is a system level testbench that instantiates z1top (the FPGA design) and an off-chip UART which communicates
