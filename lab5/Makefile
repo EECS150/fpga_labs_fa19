@@ -27,6 +27,7 @@ sim/%.fst: sim/%.tbi
 
 build/target.tcl: $(RTL) $(CONSTRAINTS)
 	mkdir -p build
+	truncate -s 0 $@
 	echo "set ABS_TOP                        $(ABS_TOP)"    >> $@
 	echo "set TOP                            $(TOP)"    >> $@
 	echo "set FPGA_PART                      $(FPGA_PART)"  >> $@
