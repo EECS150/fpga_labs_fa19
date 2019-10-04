@@ -189,7 +189,7 @@ Also, drive the \verb|leds| output so that they show the current state as such:
 Look at the commented code in \ttvar{music_streamer_testbench.v} that tests the state machine.
 Uncomment and run the test and inspect the waveform to check that the FSM is performing correctly.
 
-Next, modify \verb|z1top.v| to connect the \verb|play_pause| and \verb|reverse| ports to \verb|buttons_pressed| [2] and [3] respectively, and the bottom 4 bits of \verb|LEDS| to the \verb|leds| output of the \verb|music_streamer|.
+Next, modify \verb|z1top.v| to connect the \verb|play_pause| and \verb|reverse| ports to \verb|buttons_pressed| [2] and [3] respectively, and the bottom 3 bits of \verb|LEDS| to the \verb|leds| output of the \verb|music_streamer|.
 You can copy the instantiations of the \verb|tone_generator| and \verb|music_streamer| from \verb|z1top.v| from lab 4, but leave the top-level IOs in the skeleton untouched.
 
 Finally, program the FPGA with \verb|make impl| and \verb|make program|, and verify the functionality of the FSM.
