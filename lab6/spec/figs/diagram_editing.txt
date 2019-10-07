@@ -1,0 +1,1 @@
+The diagram can be edited in draw.io using the .xml file
