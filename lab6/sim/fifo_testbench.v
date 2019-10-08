@@ -1,32 +1,14 @@
 `timescale 1ns/100ps
 
-`define SECOND 1000000000
-`define MS 1000000
-
-// Only 1 of these defines should be uncommented at a time!
-`define SYNC_FIFO_TEST
-//`define ASYNC_FIFO_TEST
-
-// Clock periods for the read and write clocks
-// If performing the synchronous FIFO test, the read clock will be used for both the read/write interfaces
-`define RD_CLK_PERIOD 30
-`define WR_CLK_PERIOD 80
-
+`define CLK_PERIOD 8
 `define DATA_WIDTH 32
 `define FIFO_DEPTH 8
 
 module fifo_testbench();
-    reg rd_clk = 0;
-    reg wr_clk = 0;
+    reg clk = 0;
     reg rst = 0;
 
-    always #(`RD_CLK_PERIOD/2) rd_clk = ~rd_clk;
-    `ifdef SYNC_FIFO_TEST
-        always @ (*) wr_clk = rd_clk;
-    `endif
-    `ifdef ASYNC_FIFO_TEST
-        always #(`WR_CLK_PERIOD/2) wr_clk = ~wr_clk;
-    `endif
+    always #(`CLK_PERIOD/2) clk <= ~clk;
 
     // Write side signals
     reg [`DATA_WIDTH-1:0] din = 0;
@@ -43,13 +25,11 @@ module fifo_testbench();
     // Reg used to collect the data read from the FIFO
     reg [`DATA_WIDTH-1:0] received_values[`FIFO_DEPTH-1:0];
 
-    `ifdef SYNC_FIFO_TEST
-    // Instantiate the DUT
     fifo #(
         .data_width(`DATA_WIDTH),
         .fifo_depth(`FIFO_DEPTH)
     ) DUT (
-        .clk(rd_clk),
+        .clk(clk),
         .rst(rst),
         .wr_en(wr_en),
         .din(din),
@@ -58,23 +38,6 @@ module fifo_testbench();
         .dout(dout),
         .empty(empty)
     );
-    `endif
-
-    `ifdef ASYNC_FIFO_TEST
-    async_fifo #(
-        .data_width(`DATA_WIDTH),
-        .fifo_depth(`FIFO_DEPTH)
-    ) DUT (
-        .rd_clk(rd_clk),
-        .wr_clk(wr_clk),
-        .wr_en(wr_en),
-        .din(din),
-        .full(full),
-        .rd_en(rd_en),
-        .dout(dout),
-        .empty(empty)
-    );
-    `endif
 
     // This task will push some data to the FIFO through the write interface
     // If violate_interface == 1'b1, we will force wr_en high even if the FIFO indicates it is full
@@ -96,7 +59,7 @@ module fifo_testbench();
             din <= write_data;
 
             // Wait for the clock edge to perform the write
-            @(posedge wr_clk);
+            @(posedge clk);
             #1;
 
             // Deassert the write enable
@@ -117,7 +80,7 @@ module fifo_testbench();
                 rd_en <= 1'b1;
             end
             // Wait for the clock edge to get the read data
-            @(posedge rd_clk);
+            @(posedge clk);
             #1;
 
             read_data = dout;
@@ -125,49 +88,52 @@ module fifo_testbench();
         end
     endtask
 
+    integer i;
     initial begin: TB
-        integer i;
+        `ifndef IVERILOG
+            $vcdpluson;
+        `endif
+        `ifdef IVERILOG
+            $dumpfile("fifo_testbench.fst");
+            $dumpvars(0,fifo_testbench);
+        `endif
         // Generate the random data to write to the FIFO
         for (i = 0; i < `FIFO_DEPTH; i = i + 1) begin
-            test_values[i] <= $urandom();
+            test_values[i] <= $urandom;
         end
 
-        rst <= 1'b1;
-        @(posedge rd_clk);
-        rst <= 1'b0;
-        @(posedge rd_clk);
+        rst = 1'b1;
+        @(posedge clk);
+        rst = 1'b0;
+        @(posedge clk);
 
         // Let's begin with a simple complete write and read sequence to the FIFO
 
         // Check initial conditions, verify that the FIFO is not full, it is empty
         if (empty !== 1'b1) begin
-            $display("After reset, the FIFO isn't empty. empty = %b", empty);
-            $finish();
+            $display("Failure: After reset, the FIFO isn't empty. empty = %b", empty);
         end
 
         if (full !== 1'b0) begin
-            $display("After reset, the FIFO is full. full = %b", full);
-            $finish();
+            $display("Failure: After reset, the FIFO is full. full = %b", full);
         end
 
-        @(posedge wr_clk);
+        @(posedge clk);
 
         // Begin pushing data into the FIFO with a 1 cycle delay in between each write operation
         for (i = 0; i < `FIFO_DEPTH - 1; i = i + 1) begin
             write_to_fifo(test_values[i], 1'b0);
 
             // Perform checks on empty, full (disable check on empty for async FIFO due to synchronization delay)
-            `ifdef SYNC_FIFO_TEST
-                if (empty === 1'b1) begin
-                    $display("FIFO was empty as it's being filled"); $finish();
-                end
-            `endif
+            if (empty === 1'b1) begin
+                $display("Failure: While being filled, FIFO said it was empty");
+            end
             if (full === 1'b1) begin
-                $display("FIFO was full before all entries have been filled"); $finish();
+                $display("Failure: While being filled, FIFO was full before all entries were written");
             end
 
             // Insert single-cycle delay between each write
-            @(posedge wr_clk);
+            @(posedge clk);
         end
 
         // Perform the final write
@@ -175,18 +141,14 @@ module fifo_testbench();
 
         // Check that the FIFO is now full
         if (full !== 1'b1 || empty === 1'b1) begin
-            $display("FIFO wasn't full or empty went high.\n");
-            $display("full = %b, empty = %b", full, empty);
-            $finish();
+            $display("Failure: FIFO wasn't full or empty went high after writing all values. full = %b, empty = %b", full, empty);
         end
 
         // Cycle the clock, the FIFO should still be full!
-        repeat (10) @(posedge wr_clk);
+        repeat (10) @(posedge clk);
         // The FIFO should still be full!
         if (full !== 1'b1 || empty == 1'b1) begin
-            $display("Cycling the clock while the FIFO is full shouldn't change its stage! \n");
-            $display("full = %b, empty = %b", full, empty);
-            $finish();
+            $display("Failure: Cycling the clock while the FIFO is full shouldn't change its state! full = %b, empty = %b", full, empty);
         end
 
         // Try stuffing the FIFO with more data while it's full (overflow protection check)
@@ -194,53 +156,44 @@ module fifo_testbench();
             write_to_fifo(0, 1'b1);
             // Check that the FIFO is still full, has the max num of entries, and isn't empty
             if (full !== 1'b1 || empty == 1'b1) begin
-                $display("Overflowing the FIFO changed its stage (your FIFO should have overflow protection) \n");
-                $display("full = %b, empty = %b", full, empty);
-                $finish();
+                $display("Failure: Overflowing the FIFO changed its state (your FIFO should have overflow protection) full = %b, empty = %b", full, empty);
             end
         end
 
-        repeat (5) @(posedge rd_clk);
+        repeat (5) @(posedge clk);
 
         // Read from the FIFO one by one with a 1 cycle delay in between reads
         for (i = 0; i < `FIFO_DEPTH - 1; i = i + 1) begin
             read_from_fifo(1'b0, received_values[i]);
 
-            // Perform checks on empty, full (disable full check for async fifo due to synchronization delay)
+            // Perform checks on empty, full
             if (empty === 1'b1) begin
-                $display("FIFO was empty as it's being filled"); $finish();
+                $display("Failure: FIFO was empty as its being drained");
             end
-            `ifdef SYNC_FIFO_TEST
-                if (full === 1'b1) begin
-                    $display("FIFO was full before all entries have been filled"); $finish();
-                end
-            `endif
+            if (full === 1'b1) begin
+                $display("Failure: FIFO was full as its being drained");
+            end
 
-            @(posedge rd_clk);
+            @(posedge clk);
         end
 
         // Perform the final read
         read_from_fifo(1'b0, received_values[`FIFO_DEPTH-1]);
         // Check that the FIFO is now empty
         if (full !== 1'b0 || empty !== 1'b1) begin
-            $display("FIFO wasn't empty or full went high.\n");
-            $display("full = %b, empty = %b", full, empty);
-            $finish();
+            $display("Failure: FIFO wasn't empty or full is high after the FIFO has been drained. full = %b, empty = %b", full, empty);
         end
 
         // Cycle the clock and perform the same checks
-        repeat (10) @(posedge rd_clk);
+        repeat (10) @(posedge clk);
         if (full !== 1'b0 || empty !== 1'b1) begin
-            $display("FIFO wasn't empty or full went high.\n");
-            $display("full = %b, empty = %b", full, empty);
-            $finish();
+            $display("Failure: FIFO should be empty after it has been drained. full = %b, empty = %b", full, empty);
         end
 
         // Finally, let's check that the data we received from the FIFO equals the data that we wrote to it
         for (i = 0; i < `FIFO_DEPTH; i = i + 1) begin
             if (test_values[i] !== received_values[i]) begin
-                $display("Data received from FIFO not equal to data written.");
-                $display("Entry %d, got %d, expected %d", i, received_values[i], test_values[i]);
+                $display("Failure: Data received from FIFO not equal to data written. Entry %d, got %d, expected %d", i, received_values[i], test_values[i]);
             end
         end
 
@@ -248,21 +201,15 @@ module fifo_testbench();
         repeat (10) read_from_fifo(1'b1, received_values[0]);
         // Nothing should change, perform the same checks on full and empty
         if (full !== 1'b0 || empty !== 1'b1) begin
-            $display("FIFO wasn't empty or full went high.\n");
-            $display("full = %b, empty = %b", full, empty);
-            $finish();
+            $display("Failure: Empty FIFO wasn't empty or full went high when trying to read. full = %b, empty = %b", full, empty);
         end
 
         // SUCCESS! Print out some debug info.
-        $display("ALL FIFO TESTS PASSED!\n");
-        $display("This testbench was run with these params:\n");
-        `ifdef SYNC_FIFO_TEST
-            $display("Testbench for synchronous FIFO (shared read/write clock, using read clock period)");
+        $display("This testbench was run with these params:");
+        $display("CLK_PERIOD = %d, DATA_WIDTH = %d, FIFO_DEPTH = %d", `CLK_PERIOD, `DATA_WIDTH, `FIFO_DEPTH);
+        `ifndef IVERILOG
+            $vcdplusoff;
         `endif
-        `ifdef ASYNC_FIFO_TEST
-            $display("Testbench for asynchronous FIFO (separate read/write clock)");
-        `endif
-        $display("RD_CLK_PERIOD = %d, WR_CLK_PERIOD = %d, DATA_WIDTH = %d, FIFO_DEPTH = %d", `RD_CLK_PERIOD, `WR_CLK_PERIOD, `DATA_WIDTH, `FIFO_DEPTH);
         $finish();
     end
 endmodule
