@@ -207,6 +207,7 @@ module fifo_testbench();
         // SUCCESS! Print out some debug info.
         $display("This testbench was run with these params:");
         $display("CLK_PERIOD = %d, DATA_WIDTH = %d, FIFO_DEPTH = %d", `CLK_PERIOD, `DATA_WIDTH, `FIFO_DEPTH);
+        $display("If no failures were printed, this test passed");
         `ifndef IVERILOG
             $vcdplusoff;
         `endif
