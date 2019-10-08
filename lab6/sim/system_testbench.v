@@ -50,9 +50,9 @@ module system_testbench();
         `endif
         // Simulate pushing the reset button and holding it for a while
         reset = 1'b0;
-        repeat (50) @(posedge clk);
+        repeat (50) @(posedge clk); #1;
         reset = 1'b1;
-        repeat (50) @(posedge clk);
+        repeat (50) @(posedge clk); #1;
         reset = 1'b0;
 
         // Send a few characters through the off_chip_uart

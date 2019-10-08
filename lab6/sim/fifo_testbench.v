@@ -103,9 +103,9 @@ module fifo_testbench();
         end
 
         rst = 1'b1;
-        @(posedge clk);
+        @(posedge clk); #1;
         rst = 1'b0;
-        @(posedge clk);
+        @(posedge clk); #1;
 
         // Let's begin with a simple complete write and read sequence to the FIFO
 
