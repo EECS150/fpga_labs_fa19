@@ -314,23 +314,53 @@ If you see that the synthesis tool inferred a latch, you should definitely fix t
 The other 2 warning types are dependent on your design and you should ignore them only if you know they are expected.
 
 Once you put your design on the FPGA you can send data to the on-chip UART by using \verb|screen $SERIALTTY 115200|.
+The piano keys are mapped such that `z' through `$<$' go from C3 to C4 (middle C) and `q` through 'i' go from C4 to C5.
+Holding down shift moves the lower row's octave down and the upper row's octave up.
 
 You can use the 1st button to change the \verb|note_length| of your piano.
 You should test the case where you make the \verb|note_length| long, and fill up your UART FIFO by typing really fast.
 Then watch your FIFO drain slowly as each note is played for \verb|note_length| time.
 
-\section{Variable Note Lengths}
+\textbf{For Checkoff:} Save the bitstream of the fixed note length piano by copying the \verb|build| directory, so it can be used during checkoff:
+\begin{minted}{bash}
+cp -r build build_fixed
+\end{minted}
 
-\section{Fine Volume Control + Amplitude Envelope}
+\section{Variable Note Lengths}
+We would like to set the length of each note based on how long each key is pressed, instead of having a fixed note length.
+We have provided a Python script that captures keyboard keyup/keydown events and translates them into 2 UART frames (a packet) indicating whether a note should begin playing or finish playing:
+
+\begin{itemize}
+  \item A key press causes 2 UART frames to be sent in order: \texttt{0x80, character} where \texttt{character} is the key that was pressed
+  \item A key release causes 2 UART frames to be sent in order: \texttt{0x81, character} where \texttt{character} is the key that was released
+\end{itemize}
+
+Once you get a key press packet, you should begin playing the note associated with \texttt{character}, similar to before.
+If you get a key release packet that has a matching \texttt{character} with the note being played, you should stop playing it.
+
+If you're playing a note and you get key press packet, you should throw it away.
+If you're playing a note and get a key release packet for a different \texttt{character}, you should throw it away.
+
+\subsection{Testing}
+Modify the \verb|system_testbench| to test variable length note playing, and test the edge cases where multiple keys are pressed before they are released.
+
+Program it on the FPGA as usual. \verb|make impl| and \verb|make program|.
+Then run \verb|python3 scripts/piano.py| which captures keyboard events and sends them to the FPGA via UART.
+
+%\section{Fine Volume Control + Amplitude Envelope}
+% Too much work
 % Implement a partial ADSR (attack, delay, sustain, release) envelope of your output waveforms. Here is a reference link \url{https://en.wikipedia.org/wiki/Synthesizer#Attack_Decay_Sustain_Release_.28ADSR.29_envelope}. You only need to implement an attack and release volume rolloff, and can use a single volume level for both the delay and sustain portions of your waveform. You should include some way of changing the attack and release periods (either through the rotary encoder or buttons).
 
 \section{Checkoff Tasks}
 \begin{enumerate}
   \item Show the system-level testbench you wrote and its methodology for testing your piano's functionality.
   \item Show the output waveform of your testbench and explain how data moves through your system.
-  \item Demonstrate the piano working on the FPGA.
-  \item Prove the existence of your UART RX and TX FIFOs by pressing multiple keys simultaneously, filling the RX FIFO and, then seeing the notes drain out slowly into the piano.
+  \item Demonstrate the variable note length piano working on the FPGA.
+  \item For the fixed note length piano, prove the existence of your UART RX and TX FIFOs by pressing multiple keys simultaneously, filling the RX FIFO and, then seeing the notes drain out slowly into the piano.
 \end{enumerate}
+
+\subsection{Lab Report}
+No lab report!
 
 \section*{Ackowlegement}
 This lab is the result of the work of many EECS151/251 GSIs over the years including:
