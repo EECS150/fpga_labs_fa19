@@ -341,11 +341,18 @@ If you get a key release packet that has a matching \texttt{character} with the 
 If you're playing a note and you get key press packet, you should throw it away.
 If you're playing a note and get a key release packet for a different \texttt{character}, you should throw it away.
 
+You don't have to drive any characters into the UART TX in this part.
+Drive an LED indicating when a note is being played.
+
 \subsection{Testing}
 Modify the \verb|system_testbench| to test variable length note playing, and test the edge cases where multiple keys are pressed before they are released.
 
-Program it on the FPGA as usual. \verb|make impl| and \verb|make program|.
+Program it on the FPGA as usual.
 Then run \verb|python3 scripts/piano.py| which captures keyboard events and sends them to the FPGA via UART.
+You can play the same notes as beforehand.
+
+If you're running the script on your laptop, you may have to launch it with \verb|sudo|, and may have to run this line first if you \href{https://stackoverflow.com/questions/48833451/no-protocol-specified-when-running-a-sudo-su-app-on-ubuntu-linux}{get an X11 error} (\verb|xhost si:localuser:root|).
+You'll also need to install some python packages (\verb|pip3 install pynput pyserial|).
 
 %\section{Fine Volume Control + Amplitude Envelope}
 % Too much work
@@ -355,8 +362,8 @@ Then run \verb|python3 scripts/piano.py| which captures keyboard events and send
 \begin{enumerate}
   \item Show the system-level testbench you wrote and its methodology for testing your piano's functionality.
   \item Show the output waveform of your testbench and explain how data moves through your system.
+  \item For the fixed note length piano, prove the existence of your UART RX and TX FIFOs by making the note length long, then pressing multiple keys in quick succession, filling the RX FIFO and, then seeing the notes drain out slowly into the piano.
   \item Demonstrate the variable note length piano working on the FPGA.
-  \item For the fixed note length piano, prove the existence of your UART RX and TX FIFOs by pressing multiple keys simultaneously, filling the RX FIFO and, then seeing the notes drain out slowly into the piano.
 \end{enumerate}
 
 \subsection{Lab Report}

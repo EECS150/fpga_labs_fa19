@@ -80,4 +80,4 @@ clean:
 	sim/*.tbi sim/*.fst sim/*.jou sim/*.log sim/*.out
 
 .PHONY: setup synth impl program program-force vivado all clean %.tb
-.PRECIOUS: sim/%.tb sim/%.tbi
+.PRECIOUS: sim/%.tb sim/%.tbi sim/%.fst sim/%.vpd
