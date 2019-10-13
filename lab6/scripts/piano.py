@@ -1,7 +1,17 @@
 from pynput.keyboard import Key, Listener
+import os
 import serial
-ser = serial.Serial('/dev/ttyUSB0')
-ser.baudrate = 115200
+
+
+if os.name == 'nt':
+    print('Windows machine!')
+    ser = serial.Serial()
+    ser.baudrate = 115200
+    ser.port = 'COM11' # CHANGE THIS COM PORT
+    ser.open()
+else:
+    print('Not windows machine!')
+    ser = serial.Serial('/dev/ttyUSB0')
 
 keys_pressed = set()
 
