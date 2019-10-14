@@ -366,8 +366,15 @@ If you're on Windows, in addition to installing the Python packages, you should 
 \begin{enumerate}
   \item Show the system-level testbench you wrote and its methodology for testing your piano's functionality.
   \item Show the output waveform of your testbench and explain how data moves through your system.
-  \item For the fixed note length piano, prove the existence of your UART RX and TX FIFOs by making the note length long, then pressing multiple keys in quick succession, filling the RX FIFO and, then seeing the notes drain out slowly into the piano.
   \item Demonstrate the variable note length piano working on the FPGA.
+  \item For the fixed note length piano, prove the existence of your UART RX and TX FIFOs by making the note length long, then pressing multiple keys in quick succession, filling the RX FIFO and, then seeing the notes drain out slowly into the piano.
+
+    You can program the FPGA using your saved bitstream with:
+\begin{minted}{bash}
+cp -r build build_variable
+mv build_fixed build
+make program-force
+\end{minted}
 \end{enumerate}
 
 \subsection{Lab Report}
