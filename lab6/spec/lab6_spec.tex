@@ -105,7 +105,7 @@ example={#2}{#3},#1}
 \begin{document}
 
 \def\PYZsq{\textquotesingle}
-\title{\vspace{-0.4in}\Large \bf EECS 151/251A FPGA Lab 6:\\FIFOs, UART Piano, PWM Controller\vspace{-0.1in}}
+\title{\vspace{-0.4in}\Large \bf EECS 151/251A FPGA Lab 6:\\FIFOs, UART Piano\vspace{-0.1in}}
 
 \author{Prof. Borivoje Nikolic and Prof. Sophia Shao \\
 TAs: Cem Yalcin, Rebekah Zhao, Ryan Kaveh, Vighnesh Iyer \\ Department of Electrical Engineering and Computer Sciences\\
@@ -113,7 +113,7 @@ College of Engineering, University of California, Berkeley}
 \date{}
 \maketitle
 
-\newcommand{\headertext}{EECS 151/251A FPGA Lab 6: FIFOs, UART Piano, PWM Controller}
+\newcommand{\headertext}{EECS 151/251A FPGA Lab 6: FIFOs, UART Piano}
 \markboth{\headertext}{\headertext}
 \thispagestyle{empty}
 
@@ -350,8 +350,13 @@ Program it on the FPGA as usual.
 Then run \verb|python3 scripts/piano.py| which captures keyboard events and sends them to the FPGA via UART.
 You can play the same notes as beforehand.
 
-If you're running the script on your laptop, you may have to launch it with \verb|sudo|, and may have to run this line first if you \href{https://stackoverflow.com/questions/48833451/no-protocol-specified-when-running-a-sudo-su-app-on-ubuntu-linux}{get an X11 error} (\verb|xhost si:localuser:root|).
-You'll also need to install some python packages (\verb|pip3 install pynput pyserial|).
+\subsubsection{Testing Locally}
+First, install some python packages (\verb|pip3 install pynput pyserial|).
+
+If you're using Linux or OSX, you may have to launch the \verb|piano.py| script with \verb|sudo|.
+On Ubuntu, you may have to run this line first if you \href{https://stackoverflow.com/questions/48833451/no-protocol-specified-when-running-a-sudo-su-app-on-ubuntu-linux}{get an X11 error} (\verb|xhost si:localuser:root|).
+
+If you're on Windows, in addition to installing the Python packages, you should modify the \verb|scripts/piano.py| file (line 10) with the COM port assigned to the USB-UART device (according to the Device Manager).
 
 %\section{Fine Volume Control + Amplitude Envelope}
 % Too much work
