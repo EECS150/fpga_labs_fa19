@@ -12,6 +12,7 @@ if os.name == 'nt':
 else:
     print('Not windows machine!')
     ser = serial.Serial('/dev/ttyUSB0')
+    ser.baudrate = 115200
 
 keys_pressed = set()
 
