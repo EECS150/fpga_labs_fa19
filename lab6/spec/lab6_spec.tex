@@ -372,6 +372,7 @@ If you're on Windows, in addition to installing the Python packages, you should 
     You can program the FPGA using your saved bitstream with:
 \begin{minted}{bash}
 cp -r build build_variable
+rm -rf build
 mv build_fixed build
 make program-force
 \end{minted}
